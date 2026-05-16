@@ -1133,6 +1133,10 @@ input {
   --art: radial-gradient(circle at 32% 26%, #fff, #bfc5ff 42%, var(--primary));
 }
 
+.relief-card.scream {
+  --art: linear-gradient(135deg, #ff8aae, #ffbd7a);
+}
+
 .relief-card.shred {
   --art: linear-gradient(135deg, var(--primary), #c9baff);
 }
@@ -1141,8 +1145,143 @@ input {
   --art: linear-gradient(135deg, #9cefdc, #5bb7ef);
 }
 
+.relief-card.bottle {
+  --art: linear-gradient(135deg, #76b8f4, #6dd7bf);
+}
+
 .relief-card.wood {
   --art: linear-gradient(135deg, #ffd18f, #b48143);
+}
+
+.scream-area {
+  display: grid;
+  gap: 16px;
+  justify-items: center;
+  padding-top: 18px;
+  text-align: center;
+}
+
+.scream-orb {
+  width: 190px;
+  height: 190px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 8px;
+  border-radius: 50%;
+  color: #fff;
+  background:
+    radial-gradient(circle at 36% 28%, rgba(255, 255, 255, 0.78), transparent 13%),
+    linear-gradient(145deg, #ff8aae, #8066f4);
+  box-shadow: 0 24px 54px rgba(128, 102, 244, 0.24);
+  transition: transform 220ms ease, box-shadow 220ms ease;
+}
+
+.scream-orb span {
+  font-size: 48px;
+}
+
+.scream-orb strong {
+  font-size: 24px;
+}
+
+.scream-orb.active {
+  transform: scale(1.08);
+  box-shadow: 0 0 0 18px rgba(255, 138, 174, 0.12), 0 28px 68px rgba(128, 102, 244, 0.32);
+  animation: screamPulse 680ms ease;
+}
+
+@keyframes screamPulse {
+  35% {
+    transform: scale(1.14);
+  }
+}
+
+.scream-area > p,
+.bottle-sea p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.scream-wave {
+  width: 100%;
+  height: 12px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(128, 102, 244, 0.1);
+}
+
+.scream-wave i {
+  display: block;
+  width: var(--level);
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #ff8aae, #ffbd7a, var(--primary));
+  transition: width 260ms ease;
+}
+
+.bottle-page {
+  background:
+    radial-gradient(circle at 20% 16%, rgba(118, 184, 244, 0.12), transparent 28%),
+    radial-gradient(circle at 82% 30%, rgba(109, 215, 191, 0.16), transparent 28%);
+}
+
+.bottle-sea {
+  min-height: 230px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 14px;
+  margin-bottom: 14px;
+  overflow: hidden;
+  border-radius: 26px;
+  background:
+    radial-gradient(ellipse at 50% 100%, rgba(255, 255, 255, 0.78), transparent 44%),
+    linear-gradient(180deg, rgba(118, 184, 244, 0.18), rgba(109, 215, 191, 0.18));
+  box-shadow: var(--shadow);
+}
+
+.floating-bottle {
+  width: 104px;
+  height: 104px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.64);
+  box-shadow: inset 0 0 22px rgba(255, 255, 255, 0.5), 0 18px 36px rgba(77, 77, 136, 0.14);
+  font-size: 48px;
+  animation: bottleFloat 3.2s ease-in-out infinite;
+}
+
+.floating-bottle.picked {
+  animation: bottlePick 520ms ease;
+}
+
+@keyframes bottleFloat {
+  50% {
+    transform: translateY(-10px) rotate(5deg);
+  }
+}
+
+@keyframes bottlePick {
+  50% {
+    transform: translateY(-22px) rotate(-14deg) scale(1.08);
+  }
+}
+
+.bottle-note {
+  margin-top: 14px;
+  padding: 16px;
+}
+
+.bottle-note p {
+  color: var(--text);
+  line-height: 1.7;
+}
+
+.bottle-note small {
+  color: var(--muted);
 }
 
 .bubble-stage {

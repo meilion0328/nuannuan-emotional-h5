@@ -65,6 +65,12 @@ const defaultState = {
   sharedImages: [],
   woodCount: 36,
   bubbleCount: 23,
+  screamCount: 0,
+  screamLevel: 0,
+  bottles: [
+    { text: "希望今晚能睡个好觉。", time: "12分钟前" },
+    { text: "把那句没说出口的话，先交给海风。", time: "31分钟前" },
+  ],
   callSeconds: 28,
   videoSeconds: 16,
   doodleColor: "#8066f4",
@@ -216,9 +222,11 @@ function renderCurrentPage() {
   if (page === "resonanceBrowse") return renderResonanceBrowse();
   if (page.startsWith("resonanceDetail:")) return renderResonanceDetail(page.split(":")[1]);
   if (page === "woodfish") return renderWoodfish();
+  if (page === "scream") return renderScream();
   if (page === "bubbles") return renderBubbles();
   if (page === "shredder") return renderShredder();
   if (page === "doodle") return renderDoodle();
+  if (page === "bottle") return renderBottle();
   if (page === "breathing") return renderBreathing();
   if (page === "moreGames") return renderMoreGames();
   if (page === "journal") return renderJournal();
@@ -239,7 +247,7 @@ function renderCurrentPage() {
 function renderBottomNav() {
   const hiddenPages = [
     "chat", "analysis", "call", "videoCall", "imageShare", "resonancePublish",
-    "woodfish", "bubbles", "shredder", "doodle", "breathing", "moreGames",
+    "woodfish", "scream", "bubbles", "shredder", "doodle", "bottle", "breathing", "moreGames",
     "journal", "favorites", "usage", "report", "help", "privacy", "theme", "about",
   ];
   const hidden = hiddenPages.includes(state.page) || state.page.startsWith("resonanceDetail:") || state.page.startsWith("policy:");
@@ -317,7 +325,7 @@ function renderChat() {
         <button data-go="call" type="button"><b>☎</b>语音通话</button>
         <button data-go="videoCall" type="button"><b>▣</b>视频通话</button>
         <button data-go="analysis" type="button"><b>☻</b>情绪识别</button>
-        <button data-go="imageShare" type="button"><b>▧</b>图片分享</button>
+        <button data-go="reliefHome" data-tab="relief" type="button"><b>⌂</b>泄压舱</button>
       </div>
       <form class="chat-compose" id="chatForm">
         <input id="chatInput" placeholder="输入你想说的话..." autocomplete="off" />
@@ -529,12 +537,14 @@ function renderResonanceDetail(id) {
 
 function renderReliefHome() {
   const cards = [
-    ["wood", "敲敲木鱼", "敲走负担，静心放松", "woodfish"],
-    ["bubble", "解压泡泡", "轻轻戳破，释放压力", "bubbles"],
-    ["shred", "情绪粉碎机", "把坏心情暂存再粉碎", "shredder"],
-    ["wood", "涂鸦画板", "随心涂鸦，释放情绪", "doodle"],
-    ["breathe", "深呼吸练习", "跟随节奏，稳定呼吸", "breathing"],
-    ["bubble", "更多玩法", "更多减压玩法合集", "moreGames"],
+    ["wood", "🪵 敲敲木鱼", "敲走负担，静心放松", "woodfish"],
+    ["scream", "📣 声音怒吼", "把憋住的话吼出去", "scream"],
+    ["bubble", "🫧 解压泡泡", "轻轻戳破，释放压力", "bubbles"],
+    ["bottle", "🌊 漂流瓶", "把心事交给海风", "bottle"],
+    ["shred", "🧃 情绪粉碎机", "把坏心情暂存再粉碎", "shredder"],
+    ["wood", "🎨 涂鸦画板", "随心涂鸦，释放情绪", "doodle"],
+    ["breathe", "🫁 深呼吸练习", "跟随节奏，稳定呼吸", "breathing"],
+    ["bubble", "✨ 更多玩法", "更多减压玩法合集", "moreGames"],
   ];
   return `
     <section class="screen">
@@ -556,6 +566,31 @@ function renderWoodfish() {
       <div class="soft-card mantra-card">
         <strong>此刻提醒</strong>
         <p>允许事情慢一点，也允许自己先喘口气。</p>
+      </div>
+    </section>
+  `;
+}
+
+function renderScream() {
+  const level = state.screamLevel || 0;
+  return `
+    <section class="screen no-nav scream-page">
+      ${pageHead("声音怒吼", "不用真的很大声，也可以把它放出来", "reliefHome")}
+      <div class="scream-area">
+        <button class="scream-orb ${level > 0 ? "active" : ""}" id="screamButton" type="button">
+          <span>📣</span>
+          <strong id="screamLevel">${level || 0} dB</strong>
+        </button>
+        <p>按一下，让屏幕替你吼一声。</p>
+        <div class="scream-wave" style="--level:${Math.max(12, level)}%"><i></i></div>
+        <article class="soft-card mantra-card">
+          <strong>释放提示</strong>
+          <p id="screamTip">${level > 70 ? "这一下很用力，像是把胸口堵住的一团气推出去了。" : "可以轻一点，也可以重一点。这里不会评价你的声音。"}</p>
+        </article>
+        <div class="mini-panel">
+          <div><span>📣</span><p>今日怒吼</p><strong>${state.screamCount || 0} 次</strong></div>
+          <div><span>🌬</span><p>最高强度</p><strong>${level || 0} dB</strong></div>
+        </div>
       </div>
     </section>
   `;
@@ -600,6 +635,26 @@ function renderDoodle() {
         <button class="secondary-btn" id="clearDoodle" type="button">清空</button>
         <button class="primary-btn" id="saveDoodle" type="button">保存心情</button>
       </div>
+    </section>
+  `;
+}
+
+function renderBottle() {
+  const latest = state.bottles[0];
+  return `
+    <section class="screen no-nav bottle-page">
+      ${pageHead("漂流瓶", "把说不出口的心事交给水面", "reliefHome")}
+      <div class="bottle-sea">
+        <button class="floating-bottle" id="pickBottle" type="button">🍾</button>
+        <p>点一下瓶子，捞起一段轻轻漂来的话。</p>
+      </div>
+      <label class="field"><span>写给海风</span><textarea id="bottleText" style="min-height:120px;" placeholder="把此刻想放下的一句话写进瓶子里"></textarea></label>
+      <button class="primary-btn" id="sendBottle" type="button">投进海里</button>
+      <article class="soft-card bottle-note">
+        <strong>最近漂来的瓶子</strong>
+        <p id="bottleLatest">${latest ? h(latest.text) : "海面很安静，等你投出第一只瓶子。"}</p>
+        <small>${latest ? latest.time : "此刻"}</small>
+      </article>
     </section>
   `;
 }
@@ -947,6 +1002,8 @@ function bindActions() {
 
   const woodfish = document.querySelector("#woodfish");
   if (woodfish) woodfish.addEventListener("click", knockWoodfish);
+  const screamButton = document.querySelector("#screamButton");
+  if (screamButton) screamButton.addEventListener("click", releaseScream);
   const shredButton = document.querySelector("#shredButton");
   if (shredButton) shredButton.addEventListener("click", shredWorry);
   const breathToggle = document.querySelector("#breathToggle");
@@ -978,6 +1035,10 @@ function bindActions() {
     saveState();
     render();
   }));
+  const sendBottle = document.querySelector("#sendBottle");
+  if (sendBottle) sendBottle.addEventListener("click", sendBottleMessage);
+  const pickBottle = document.querySelector("#pickBottle");
+  if (pickBottle) pickBottle.addEventListener("click", pickBottleMessage);
   document.querySelectorAll("[data-mini-game]").forEach((node) => node.addEventListener("click", () => playMiniGame(node.dataset.miniGame)));
 
   const saveJournal = document.querySelector("#saveJournal");
@@ -1015,7 +1076,7 @@ function bindActions() {
 
 function inferTab(page) {
   if (page.startsWith("resonance")) return "resonance";
-  if (["reliefHome", "woodfish", "bubbles", "shredder", "doodle", "breathing", "moreGames"].includes(page)) return "relief";
+  if (["reliefHome", "woodfish", "scream", "bubbles", "shredder", "doodle", "bottle", "breathing", "moreGames"].includes(page)) return "relief";
   if (["mineHome", "journal", "favorites", "usage", "report", "help", "privacy", "theme", "about"].includes(page) || page.startsWith("policy:")) return "mine";
   return "companion";
 }
@@ -1085,7 +1146,7 @@ async function requestDeepSeekReply(text) {
       }
     }
   } catch (error) {
-    state.chats.push({ role: "bot", text: `${aiReply(text)}\n\n（DeepSeek 暂时连接不上，我先用本地安抚回复陪你一下。）` });
+    state.chats.push({ role: "bot", text: aiReply(text) });
     shouldRenderOnFinish = true;
     showToast("DeepSeek 暂时连接失败，已使用本地回复");
   } finally {
@@ -1111,10 +1172,25 @@ function scrollChatToBottom() {
 }
 
 function aiReply(text) {
-  if (/焦虑|压力|睡不着/.test(text)) return "我听见你正在承受压力。我们先一起慢慢呼吸，再把最困扰你的那件事拆成一小步。";
-  if (/朋友|矛盾|吵/.test(text)) return "关系里的拉扯会很消耗人。你愿意的话，我们可以一起复盘发生了什么，也照顾一下你的委屈。";
-  if (/开心|好/.test(text)) return "真好呀，这份轻盈值得被好好记住。要不要把它存进今天的心情里？";
-  return "我在这里。你可以不用组织得很完整，想到哪里说到哪里就好。";
+  if (/自杀|自残|不想活|结束生命|伤害自己/.test(text)) {
+    return "我无法提供危机干预，但你的感受很重要。\n\n请拨打你所在地的心理援助热线（如美国988，英国116123），或者联系一位你信任的人。\n\n需要我帮你搜索附近的热线吗？";
+  }
+  if (/你是谁|是不是AI|是AI吗|你是AI/.test(text)) {
+    return "我是暖暖，一个专门陪你说话的小程序。\n\n没有人类那么聪明，但也不会烦你。";
+  }
+  if (/怎么办|我该怎么|怎么做/.test(text)) {
+    return "这件事压在你身上，听起来真的很累。\n\n如果只做一件能让它轻1%的小事，你觉得会是什么？";
+  }
+  if (/算了|唉|随便|无所谓/.test(text)) {
+    return "嗯，像是已经累到不想再解释了。\n\n[要不要先把手机扣在桌上10秒钟，让世界暂时安静一下？]";
+  }
+  if (/焦虑|压力|睡不着|烦|崩溃|难受/.test(text)) {
+    return "听起来这阵压力把你裹得很紧，换作很多人也会喘不过气。\n\n你愿意的话，可以多说一点。";
+  }
+  if (/朋友|矛盾|吵|领导|骂|委屈/.test(text)) {
+    return "被关系里的事拉扯，真的会让人又委屈又疲惫。\n\n你愿意的话，我陪你一起吐吐槽。";
+  }
+  return "听起来你心里有些东西还没找到出口。\n\n不急着说清楚，你随便说一点，我在这里接着。";
 }
 
 function likePost(id) {
@@ -1171,6 +1247,28 @@ function knockWoodfish() {
     wood.classList.add("hit");
   }
   showToast("咚，放下一点点");
+}
+
+function releaseScream() {
+  const level = 45 + Math.floor(Math.random() * 51);
+  state.screamLevel = level;
+  state.screamCount = (state.screamCount || 0) + 1;
+  recordUsage("声音怒吼", `释放了一次 ${level} dB 的情绪`);
+
+  const orb = document.querySelector("#screamButton");
+  const label = document.querySelector("#screamLevel");
+  const tip = document.querySelector("#screamTip");
+  if (orb) {
+    orb.classList.remove("active");
+    void orb.offsetWidth;
+    orb.classList.add("active");
+  }
+  if (label) label.textContent = `${level} dB`;
+  if (tip) tip.textContent = level > 78 ? "这一下很用力，像是把胸口堵住的一团气推出去了。" : "这一下已经被接住了，不需要解释它。";
+  showToast("声音已经被海绵一样接住了");
+  window.setTimeout(() => {
+    if (orb) orb.classList.remove("active");
+  }, 900);
 }
 
 function shredWorry() {
@@ -1277,6 +1375,31 @@ function clearDoodleCanvas() {
   ctx.fillStyle = "rgba(255,255,255,0.72)";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   showToast("画板已清空");
+}
+
+function sendBottleMessage() {
+  const input = document.querySelector("#bottleText");
+  const text = input?.value.trim();
+  if (!text) return showToast("先写一句想放下的话吧");
+  state.bottles.unshift({ text, time: "刚刚" });
+  state.bottles = state.bottles.slice(0, 12);
+  recordUsage("漂流瓶", "投出了一只情绪漂流瓶");
+  showToast("瓶子已经漂走了");
+  render();
+}
+
+function pickBottleMessage() {
+  if (!state.bottles.length) return showToast("海面还很安静");
+  const item = state.bottles[Math.floor(Math.random() * state.bottles.length)];
+  const latest = document.querySelector("#bottleLatest");
+  const bottle = document.querySelector("#pickBottle");
+  if (latest) latest.textContent = item.text;
+  if (bottle) {
+    bottle.classList.remove("picked");
+    void bottle.offsetWidth;
+    bottle.classList.add("picked");
+  }
+  recordUsage("漂流瓶", "捞起了一只情绪漂流瓶");
 }
 
 function playMiniGame(key) {
