@@ -508,6 +508,17 @@ input {
   font-weight: 900;
 }
 
+.send-icon {
+  width: 18px;
+  height: 18px;
+  display: block;
+  fill: rgba(255, 255, 255, 0.96);
+  stroke: rgba(255, 255, 255, 0.96);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .quick-grid,
 .mini-panel,
 .relief-grid {
@@ -517,7 +528,31 @@ input {
 }
 
 .quick-grid {
+  margin-top: 8px;
+}
+
+.quick-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin-top: 14px;
+  padding: 0 2px;
+}
+
+.quick-head span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.quick-head button {
+  min-height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  color: var(--primary);
+  background: rgba(128, 102, 244, 0.1);
+  font-size: 12px;
+  font-weight: 800;
 }
 
 .quick-grid button,

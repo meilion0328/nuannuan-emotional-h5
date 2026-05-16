@@ -43,6 +43,7 @@ const defaultState = {
   authMode: "login",
   tab: "companion",
   page: "home",
+  quickTopicBatch: 0,
   filter: "全部",
   posts: defaultPosts,
   liked: {},
@@ -88,6 +89,25 @@ let videoTimer = 0;
 let breathTimer = 0;
 let screamTimer = 0;
 let activeStream = null;
+
+const quickTopicBatches = [
+  ["最近有点焦虑...", "和朋友闹矛盾了", "压力好大，睡不着", "没什么，就是想聊聊"],
+  ["今天有点委屈", "突然很想哭", "感觉没人懂我", "心里堵得慌"],
+  ["被人否定了", "有点孤单", "不知道为什么烦", "想安静待一会儿"],
+  ["明天不想上班", "对自己很失望", "关系让我好累", "想把情绪放一放"],
+];
+
+const sendIcon = `
+  <svg class="send-icon" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M4 11.5 20 4l-4.8 16-3.1-6.1L4 11.5Z"></path>
+    <path d="m12.1 13.9 3.1-3.1"></path>
+  </svg>
+`;
+
+function renderQuickTopicButtons() {
+  const topics = quickTopicBatches[state.quickTopicBatch % quickTopicBatches.length];
+  return topics.map((text) => `<button data-quick="${text}" type="button">${text}</button>`).join("");
+}
 
 function loadState() {
   try {
@@ -302,10 +322,14 @@ function renderHome() {
       </div>
       <form class="search-row" id="homeTalkForm">
         <input id="homeTalkInput" placeholder="想和我聊聊什么呢？" autocomplete="off" />
-        <button class="send-btn" type="submit">⌁</button>
+        <button class="send-btn" type="submit" aria-label="发送">${sendIcon}</button>
       </form>
+      <div class="quick-head">
+        <span>可以从这里开始</span>
+        <button id="refreshQuickTopics" type="button">换一批</button>
+      </div>
       <div class="quick-grid">
-        ${["最近有点焦虑...", "和朋友闹矛盾了", "压力好大，睡不着", "没什么，就是想聊聊"].map((text) => `<button data-quick="${text}" type="button">${text}</button>`).join("")}
+        ${renderQuickTopicButtons()}
       </div>
       <div class="mini-panel">
         <div><span>♡</span><p>今日陪伴</p><strong>${Math.max(26, state.chats.length * 3)} 分钟</strong></div>
@@ -331,7 +355,7 @@ function renderChat() {
       </div>
       <form class="chat-compose" id="chatForm">
         <input id="chatInput" placeholder="输入你想说的话..." autocomplete="off" />
-        <button class="send-btn" type="submit">➤</button>
+        <button class="send-btn" type="submit" aria-label="发送">${sendIcon}</button>
       </form>
     </section>
   `;
@@ -952,7 +976,22 @@ function bindActions() {
   });
 
   document.querySelectorAll("[data-toast]").forEach((node) => node.addEventListener("click", () => showToast(node.dataset.toast)));
-  document.querySelectorAll("[data-quick]").forEach((node) => node.addEventListener("click", () => sendChat(node.dataset.quick)));
+  const quickGrid = document.querySelector(".quick-grid");
+  if (quickGrid) {
+    quickGrid.addEventListener("click", (event) => {
+      const quickButton = event.target.closest?.("[data-quick]");
+      if (quickButton) sendChat(quickButton.dataset.quick);
+    });
+  }
+  const refreshQuickTopics = document.querySelector("#refreshQuickTopics");
+  if (refreshQuickTopics) {
+    refreshQuickTopics.addEventListener("click", () => {
+      state.quickTopicBatch = (state.quickTopicBatch + 1) % quickTopicBatches.length;
+      saveState();
+      const grid = document.querySelector(".quick-grid");
+      if (grid) grid.innerHTML = renderQuickTopicButtons();
+    });
+  }
 
   const homeForm = document.querySelector("#homeTalkForm");
   if (homeForm) {
