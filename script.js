@@ -472,7 +472,7 @@ function renderResonanceHome() {
       <article class="resonance-hero"><p>今日心情共鸣</p><strong>${state.posts.reduce((n, p) => n + p.resonance, 0).toLocaleString()}</strong><span>人正在跟相似感受轻轻相遇</span></article>
       <button class="primary-btn" style="margin-top:14px;" data-go="resonancePublish" type="button">发布此刻心情</button>
       <div class="tabs">${["全部", "难过", "焦虑", "迷茫", "开心"].map((tag) => `<button data-browse="${tag}" type="button">${tag}</button>`).join("")}</div>
-      <div class="post-list">${posts.map(renderPostCard).join("")}</div>
+      <div class="post-list resonance-home-list">${posts.map(renderPostCard).join("")}</div>
     </section>
   `;
 }
@@ -480,10 +480,10 @@ function renderResonanceHome() {
 function renderResonanceBrowse(filter = state.filter || "全部") {
   const posts = visiblePosts(filter);
   return `
-    <section class="screen no-nav">
+    <section class="screen no-nav resonance-browse-screen">
       ${pageHead("共鸣浏览", "", "resonanceHome")}
       <div class="tabs">${["全部", "难过", "焦虑", "迷茫", "开心"].map((tag) => `<button class="${filter === tag ? "selected" : ""}" data-browse="${tag}" type="button">${tag}</button>`).join("")}</div>
-      <div class="post-list">${posts.length ? posts.map(renderPostCard).join("") : `<div class="soft-card empty-state">还没有这类心情，先发布一条吧。</div>`}</div>
+      <div class="post-list light-post-list">${posts.length ? posts.map(renderPostCard).join("") : `<div class="soft-card empty-state">还没有这类心情，先发布一条吧。</div>`}</div>
     </section>
   `;
 }

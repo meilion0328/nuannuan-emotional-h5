@@ -916,6 +916,50 @@ input {
   padding: 7px 12px;
 }
 
+.resonance-browse-screen {
+  background:
+    radial-gradient(circle at 20% 10%, rgba(128, 102, 244, 0.08), transparent 28%),
+    radial-gradient(circle at 86% 22%, rgba(118, 184, 244, 0.12), transparent 30%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(247, 244, 255, 0.72));
+}
+
+.resonance-browse-screen .post-card,
+.resonance-home-list .post-card {
+  color: var(--text);
+  background:
+    radial-gradient(circle at 86% 18%, rgba(128, 102, 244, 0.12), transparent 24%),
+    radial-gradient(circle at 12% 92%, rgba(118, 184, 244, 0.12), transparent 26%),
+    var(--panel-solid);
+  border: 1px solid rgba(128, 102, 244, 0.11);
+  box-shadow: 0 14px 30px rgba(77, 77, 136, 0.09);
+}
+
+.resonance-browse-screen .post-card::after,
+.resonance-home-list .post-card::after {
+  background: rgba(128, 102, 244, 0.22);
+  opacity: 0.7;
+}
+
+.resonance-browse-screen .post-head .avatar,
+.resonance-home-list .post-head .avatar {
+  color: var(--primary);
+  background: rgba(128, 102, 244, 0.12);
+}
+
+.resonance-browse-screen .post-head small,
+.resonance-browse-screen .post-card p,
+.resonance-home-list .post-head small,
+.resonance-home-list .post-card p {
+  color: var(--muted);
+  opacity: 1;
+}
+
+.resonance-browse-screen .like-btn,
+.resonance-home-list .like-btn {
+  color: var(--primary);
+  background: rgba(128, 102, 244, 0.1);
+}
+
 .detail-panel {
   margin-top: 190px;
   padding: 18px;
