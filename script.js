@@ -307,7 +307,7 @@ function renderHome() {
 
 function renderChat() {
   return `
-    <section class="screen no-nav">
+    <section class="screen no-nav chat-screen">
       ${pageHead("暖暖", "● 在线", "home")}
       <div class="chat-list" id="chatList">
         ${state.chats.map((msg) => `<article class="bubble-row ${msg.role}">${msg.role === "bot" ? `<span class="avatar">☁</span>` : ""}<p>${h(msg.text)}</p></article>`).join("")}
@@ -1105,10 +1105,8 @@ function getLastBotBubble() {
 
 function scrollChatToBottom() {
   window.setTimeout(() => {
-    const screen = document.querySelector(".screen");
     const chatList = document.querySelector("#chatList");
     if (chatList) chatList.scrollTop = chatList.scrollHeight;
-    if (screen) screen.scrollTop = screen.scrollHeight;
   }, 0);
 }
 

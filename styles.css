@@ -563,6 +563,31 @@ input {
   gap: 12px;
 }
 
+.chat-screen {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding-bottom: 18px;
+}
+
+.chat-screen .page-head,
+.chat-screen .chat-actions,
+.chat-screen .chat-compose {
+  flex: 0 0 auto;
+}
+
+.chat-screen .chat-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden auto;
+  padding: 2px 0 8px;
+  scrollbar-width: none;
+}
+
+.chat-screen .chat-list::-webkit-scrollbar {
+  display: none;
+}
+
 .bubble-row {
   display: flex;
   align-items: flex-start;
