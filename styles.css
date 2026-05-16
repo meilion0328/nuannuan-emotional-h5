@@ -1089,29 +1089,29 @@ input {
 
 .relief-grid {
   margin-top: 12px;
+  gap: 12px;
 }
 
 .relief-card {
   position: relative;
-  min-height: 120px;
+  min-height: 118px;
   overflow: hidden;
-  padding: 14px;
-  border-radius: 18px;
+  padding: 15px 13px;
+  border-radius: 16px;
   color: var(--text);
-  background: var(--panel);
-  box-shadow: 0 12px 26px rgba(77, 77, 136, 0.09);
+  background: var(--card-bg);
+  box-shadow: 0 10px 24px rgba(96, 92, 156, 0.08);
   text-align: left;
 }
 
 .relief-card::after {
   content: "";
   position: absolute;
-  right: 14px;
-  bottom: 12px;
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  background: var(--art);
+  inset: 0;
+  background:
+    radial-gradient(circle at 18% 78%, rgba(255, 255, 255, 0.55), transparent 18%),
+    radial-gradient(circle at 85% 24%, rgba(255, 255, 255, 0.52), transparent 19%);
+  pointer-events: none;
 }
 
 .relief-card strong,
@@ -1122,35 +1122,262 @@ input {
 }
 
 .relief-card span {
-  width: 82%;
-  margin-top: 8px;
+  width: 68%;
+  margin-top: 7px;
   color: var(--muted);
   font-size: 11px;
   line-height: 1.45;
 }
 
 .relief-card.bubble {
-  --art: radial-gradient(circle at 32% 26%, #fff, #bfc5ff 42%, var(--primary));
+  --card-bg: linear-gradient(145deg, #e5f5ff, #f4fbff);
 }
 
 .relief-card.scream {
-  --art: linear-gradient(135deg, #ff8aae, #ffbd7a);
+  --card-bg: linear-gradient(145deg, #fff0f5, #fff8fb);
 }
 
 .relief-card.shred {
-  --art: linear-gradient(135deg, var(--primary), #c9baff);
+  --card-bg: linear-gradient(145deg, #eeeaff, #faf8ff);
 }
 
 .relief-card.breathe {
-  --art: linear-gradient(135deg, #9cefdc, #5bb7ef);
+  --card-bg: linear-gradient(145deg, #e8f8ff, #f5fcff);
 }
 
 .relief-card.bottle {
-  --art: linear-gradient(135deg, #76b8f4, #6dd7bf);
+  --card-bg: linear-gradient(145deg, #e7fbff, #f8feff);
 }
 
 .relief-card.wood {
-  --art: linear-gradient(135deg, #ffd18f, #b48143);
+  --card-bg: linear-gradient(145deg, #fff0f3, #fff8f2);
+}
+
+.relief-card.doodle {
+  --card-bg: linear-gradient(145deg, #ffeef4, #fff8fb);
+}
+
+.relief-card.more {
+  --card-bg: linear-gradient(145deg, #fff7df, #fffaf0);
+}
+
+.relief-home-screen {
+  background:
+    radial-gradient(circle at 8% 18%, rgba(128, 102, 244, 0.08), transparent 28%),
+    radial-gradient(circle at 92% 30%, rgba(118, 184, 244, 0.11), transparent 30%);
+}
+
+.relief-visual {
+  position: absolute;
+  right: 12px;
+  bottom: 8px;
+  z-index: 1;
+  width: 70px;
+  height: 58px;
+  pointer-events: none;
+  filter: drop-shadow(0 12px 12px rgba(88, 77, 150, 0.13));
+}
+
+.relief-visual.wood::before {
+  content: "";
+  position: absolute;
+  left: 10px;
+  top: 18px;
+  width: 54px;
+  height: 32px;
+  border-radius: 55% 45% 48% 52%;
+  background: linear-gradient(145deg, #f2bd75, #b56e35);
+  box-shadow: inset -10px -8px 12px rgba(92, 45, 20, 0.17);
+}
+
+.relief-visual.wood::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 30px;
+  width: 52px;
+  height: 9px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #a45f2a, #f0b669);
+  transform: rotate(-22deg);
+}
+
+.relief-visual.bubble::before {
+  content: "";
+  position: absolute;
+  right: 6px;
+  bottom: 5px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 31% 24%, rgba(255, 255, 255, 0.92), transparent 12%),
+    radial-gradient(circle at 68% 72%, rgba(255, 177, 213, 0.35), transparent 18%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.4), rgba(168, 192, 255, 0.35));
+  border: 1px solid rgba(255, 255, 255, 0.76);
+}
+
+.relief-visual.bubble::after {
+  content: "";
+  position: absolute;
+  left: 10px;
+  top: 9px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.relief-visual.shred::before {
+  content: "";
+  position: absolute;
+  left: 8px;
+  top: 5px;
+  width: 52px;
+  height: 45px;
+  border-radius: 14px 14px 10px 10px;
+  background: linear-gradient(145deg, #b8a9ff, #7463df);
+  box-shadow: inset 0 -7px 10px rgba(72, 52, 158, 0.18);
+}
+
+.relief-visual.shred::after {
+  content: "";
+  position: absolute;
+  left: 20px;
+  top: 15px;
+  width: 28px;
+  height: 18px;
+  border-radius: 5px;
+  background:
+    radial-gradient(circle at 34% 53%, #1d2143 0 8%, transparent 9%),
+    radial-gradient(circle at 66% 53%, #1d2143 0 8%, transparent 9%),
+    #f7f4ff;
+  border: 3px solid #5145ba;
+}
+
+.relief-visual.doodle::before {
+  content: "";
+  position: absolute;
+  right: 8px;
+  bottom: 4px;
+  width: 52px;
+  height: 42px;
+  border-radius: 50%;
+  background: #f6c98d;
+  transform: rotate(-12deg);
+}
+
+.relief-visual.doodle::after {
+  content: "";
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
+  width: 50px;
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #4a9de8, #f4d07a);
+  transform: rotate(-38deg);
+  box-shadow:
+    15px 12px 0 -2px #ff7c6b,
+    27px 1px 0 -2px #e85d5d,
+    5px 18px 0 -2px #ff9d57;
+}
+
+.relief-visual.breathe::before,
+.relief-visual.breathe::after {
+  content: "";
+  position: absolute;
+  bottom: 6px;
+  width: 30px;
+  height: 44px;
+  border-radius: 18px 18px 22px 22px;
+  background: linear-gradient(145deg, #a2efe0, #62c7d6);
+}
+
+.relief-visual.breathe::before {
+  left: 8px;
+  transform: rotate(-15deg);
+}
+
+.relief-visual.breathe::after {
+  right: 12px;
+  transform: rotate(15deg);
+}
+
+.relief-visual.scream::before {
+  content: "";
+  position: absolute;
+  left: 10px;
+  top: 9px;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 38% 40%, #2a234a 0 8%, transparent 9%),
+    radial-gradient(circle at 62% 40%, #2a234a 0 8%, transparent 9%),
+    radial-gradient(ellipse at 50% 68%, #6b3d56 0 14%, transparent 15%),
+    linear-gradient(145deg, #ffd3df, #ff8aae);
+}
+
+.relief-visual.scream::after {
+  content: "";
+  position: absolute;
+  right: 4px;
+  top: 17px;
+  width: 20px;
+  height: 20px;
+  border: 4px solid rgba(255, 138, 174, 0.48);
+  border-left: 0;
+  border-bottom: 0;
+  border-radius: 50%;
+}
+
+.relief-visual.bottle::before {
+  content: "";
+  position: absolute;
+  left: 20px;
+  top: 4px;
+  width: 28px;
+  height: 54px;
+  border-radius: 11px 11px 16px 16px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(118, 184, 244, 0.42)),
+    #dff8ff;
+  border: 1px solid rgba(255, 255, 255, 0.78);
+  transform: rotate(22deg);
+}
+
+.relief-visual.bottle::after {
+  content: "";
+  position: absolute;
+  left: 14px;
+  bottom: 3px;
+  width: 52px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(109, 215, 191, 0.28);
+}
+
+.relief-visual.more::before {
+  content: "";
+  position: absolute;
+  right: 8px;
+  bottom: 5px;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(145deg, #ffe58a, #f7b64c);
+  clip-path: polygon(50% 0, 62% 33%, 98% 35%, 69% 56%, 79% 92%, 50% 70%, 21% 92%, 31% 56%, 2% 35%, 38% 33%);
+}
+
+.relief-visual.more::after {
+  content: "";
+  position: absolute;
+  left: 10px;
+  top: 13px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 203, 91, 0.45);
 }
 
 .scream-area {
@@ -1185,10 +1412,20 @@ input {
   font-size: 24px;
 }
 
+.scream-orb em {
+  font-size: 12px;
+  font-style: normal;
+  opacity: 0.82;
+}
+
 .scream-orb.active {
   transform: scale(1.08);
   box-shadow: 0 0 0 18px rgba(255, 138, 174, 0.12), 0 28px 68px rgba(128, 102, 244, 0.32);
   animation: screamPulse 680ms ease;
+}
+
+.scream-orb.running {
+  animation: screamPulse 680ms ease infinite;
 }
 
 @keyframes screamPulse {

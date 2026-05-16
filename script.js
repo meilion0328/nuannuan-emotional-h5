@@ -86,6 +86,7 @@ let toastTimer = 0;
 let callTimer = 0;
 let videoTimer = 0;
 let breathTimer = 0;
+let screamTimer = 0;
 let activeStream = null;
 
 function loadState() {
@@ -160,6 +161,7 @@ function go(page, tab = state.tab) {
   clearInterval(callTimer);
   clearInterval(videoTimer);
   clearInterval(breathTimer);
+  clearInterval(screamTimer);
   stopMedia();
   state.page = page;
   state.tab = tab;
@@ -537,19 +539,25 @@ function renderResonanceDetail(id) {
 
 function renderReliefHome() {
   const cards = [
-    ["wood", "🪵 敲敲木鱼", "敲走负担，静心放松", "woodfish"],
-    ["scream", "📣 声音怒吼", "把憋住的话吼出去", "scream"],
-    ["bubble", "🫧 解压泡泡", "轻轻戳破，释放压力", "bubbles"],
-    ["bottle", "🌊 漂流瓶", "把心事交给海风", "bottle"],
-    ["shred", "🧃 情绪粉碎机", "把坏心情暂存再粉碎", "shredder"],
-    ["wood", "🎨 涂鸦画板", "随心涂鸦，释放情绪", "doodle"],
-    ["breathe", "🫁 深呼吸练习", "跟随节奏，稳定呼吸", "breathing"],
-    ["bubble", "✨ 更多玩法", "更多减压玩法合集", "moreGames"],
+    ["wood", "敲敲木鱼", "敲走负担，静心放松", "woodfish"],
+    ["bubble", "解压泡泡", "戳破烦恼，释放压力", "bubbles"],
+    ["shred", "情绪粉碎机", "粉碎烦恼，听懂情绪", "shredder"],
+    ["doodle", "涂鸦画板", "随心涂鸦，释放情绪", "doodle"],
+    ["breathe", "深呼吸练习", "调节呼吸，放松身心", "breathing"],
+    ["scream", "声音怒吼", "把憋住的话吼出去", "scream"],
+    ["bottle", "漂流瓶", "把心事交给海风", "bottle"],
+    ["more", "更多玩法", "发现更多解压方式", "moreGames"],
   ];
   return `
-    <section class="screen">
+    <section class="screen relief-home-screen">
       <header class="page-head"><div><h2>泄压舱</h2><p>选择你的专属泄压方式</p></div></header>
-      <div class="relief-grid">${cards.map(([cls, title, sub, page]) => `<button class="relief-card ${cls}" data-relief="${page}" type="button"><strong>${title}</strong><span>${sub}</span></button>`).join("")}</div>
+      <div class="relief-grid">${cards.map(([cls, title, sub, page]) => `
+        <button class="relief-card ${cls}" data-relief="${page}" type="button">
+          <strong>${title}</strong>
+          <span>${sub}</span>
+          <i class="relief-visual ${cls}" aria-hidden="true"></i>
+        </button>
+      `).join("")}</div>
     </section>
   `;
 }
@@ -580,6 +588,7 @@ function renderScream() {
         <button class="scream-orb ${level > 0 ? "active" : ""}" id="screamButton" type="button">
           <span>📣</span>
           <strong id="screamLevel">${level || 0} dB</strong>
+          <em id="screamStatus">${state.screamRunning ? "释放中" : "点击开始"}</em>
         </button>
         <p>按一下，让屏幕替你吼一声。</p>
         <div class="scream-wave" style="--level:${Math.max(12, level)}%"><i></i></div>
@@ -1250,25 +1259,41 @@ function knockWoodfish() {
 }
 
 function releaseScream() {
-  const level = 45 + Math.floor(Math.random() * 51);
-  state.screamLevel = level;
-  state.screamCount = (state.screamCount || 0) + 1;
-  recordUsage("声音怒吼", `释放了一次 ${level} dB 的情绪`);
-
   const orb = document.querySelector("#screamButton");
   const label = document.querySelector("#screamLevel");
   const tip = document.querySelector("#screamTip");
-  if (orb) {
-    orb.classList.remove("active");
-    void orb.offsetWidth;
-    orb.classList.add("active");
-  }
-  if (label) label.textContent = `${level} dB`;
-  if (tip) tip.textContent = level > 78 ? "这一下很用力，像是把胸口堵住的一团气推出去了。" : "这一下已经被接住了，不需要解释它。";
-  showToast("声音已经被海绵一样接住了");
-  window.setTimeout(() => {
-    if (orb) orb.classList.remove("active");
-  }, 900);
+  const status = document.querySelector("#screamStatus");
+  const wave = document.querySelector(".scream-wave");
+
+  if (state.screamRunning) return;
+
+  clearInterval(screamTimer);
+  state.screamRunning = true;
+  state.screamLevel = 18;
+  const peak = 82 + Math.floor(Math.random() * 14);
+  if (orb) orb.classList.add("active", "running");
+  if (status) status.textContent = "释放中";
+  if (tip) tip.textContent = "分贝会慢慢升上去。你只要看着它，把憋住的那口气交出去。";
+  showToast("开始释放");
+
+  screamTimer = window.setInterval(() => {
+    const next = Math.min(peak, state.screamLevel + 5 + Math.floor(Math.random() * 7));
+    state.screamLevel = next;
+    if (label) label.textContent = `${next} dB`;
+    if (wave) wave.style.setProperty("--level", `${Math.max(12, next)}%`);
+
+    if (next >= peak) {
+      clearInterval(screamTimer);
+      state.screamRunning = false;
+      state.screamCount = (state.screamCount || 0) + 1;
+      recordUsage("声音怒吼", `释放了一次 ${next} dB 的情绪`);
+      if (tip) tip.textContent = next > 88 ? "这一下很用力，像是把胸口堵住的一团气推出去了。" : "这一下已经被接住了，不需要解释它。";
+      if (status) status.textContent = "完成";
+      if (orb) orb.classList.remove("running");
+      showToast("声音已经被海绵一样接住了");
+      saveState();
+    }
+  }, 180);
 }
 
 function shredWorry() {
