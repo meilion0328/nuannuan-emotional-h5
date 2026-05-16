@@ -115,20 +115,61 @@ async function handleChat(req, res) {
         ],
         temperature: 0.7,
         max_tokens: 500,
-        stream: false,
+        stream: true,
       }),
     });
 
-    const data = await upstream.json().catch(() => ({}));
     if (!upstream.ok) {
+      const data = await upstream.json().catch(() => ({}));
       sendJson(res, upstream.status, { error: data.error?.message || "DeepSeek API request failed" });
       return;
     }
 
-    const reply = data.choices?.[0]?.message?.content || "我在这里，愿意继续听你慢慢说。";
-    sendJson(res, 200, { reply });
+    res.writeHead(200, {
+      "Content-Type": "text/plain; charset=utf-8",
+      "Cache-Control": "no-cache, no-transform",
+      "X-Accel-Buffering": "no",
+    });
+
+    const reader = upstream.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let wrote = false;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split(/\r?\n/);
+      buffer = lines.pop() || "";
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed.startsWith("data:")) continue;
+        const payload = trimmed.slice(5).trim();
+        if (!payload || payload === "[DONE]") continue;
+
+        try {
+          const data = JSON.parse(payload);
+          const delta = data.choices?.[0]?.delta?.content || "";
+          if (delta) {
+            wrote = true;
+            res.write(delta);
+          }
+        } catch {
+          // Ignore malformed keep-alive chunks from the upstream stream.
+        }
+      }
+    }
+
+    if (!wrote) res.write("我在这里，愿意继续听你慢慢说。");
+    res.end();
   } catch (error) {
-    sendJson(res, 500, { error: error.message || "Unexpected server error" });
+    if (!res.headersSent) {
+      sendJson(res, 500, { error: error.message || "Unexpected server error" });
+      return;
+    }
+    res.end();
   }
 }
 

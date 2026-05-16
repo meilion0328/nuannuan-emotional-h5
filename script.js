@@ -177,6 +177,7 @@ function render() {
     </section>
   `;
   bindActions();
+  if (state.page === "chat") scrollChatToBottom();
 }
 
 function renderAuth() {
@@ -1027,10 +1028,12 @@ function sendChat(text) {
   state.page = "chat";
   state.tab = "companion";
   render();
+  scrollChatToBottom();
   requestDeepSeekReply(text);
 }
 
 async function requestDeepSeekReply(text) {
+  let shouldRenderOnFinish = false;
   try {
     const endpoint = window.location.protocol === "file:" ? "http://localhost:4173/api/chat" : "/api/chat";
     const response = await fetch(endpoint, {
@@ -1044,19 +1047,69 @@ async function requestDeepSeekReply(text) {
         })),
       }),
     });
-    const data = await response.json();
     if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
       throw new Error(data?.error || "DeepSeek request failed");
     }
-    state.chats.push({ role: "bot", text: data.reply || aiReply(text) });
+
+    state.chatLoading = false;
+    state.chats.push({ role: "bot", text: "" });
+    const botIndex = state.chats.length - 1;
+    saveState();
+    if (state.page === "chat") render();
+    let botBubble = getLastBotBubble();
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      const chunk = decoder.decode(value, { stream: true });
+      if (!chunk) continue;
+      state.chats[botIndex].text += chunk;
+      if (state.page === "chat") {
+        botBubble ||= getLastBotBubble();
+        if (botBubble) {
+          botBubble.textContent = state.chats[botIndex].text;
+        }
+        scrollChatToBottom();
+      }
+    }
+
+    if (!state.chats[botIndex].text.trim()) {
+      state.chats[botIndex].text = aiReply(text);
+      if (state.page === "chat") {
+        botBubble ||= getLastBotBubble();
+        if (botBubble) botBubble.textContent = state.chats[botIndex].text;
+      }
+    }
   } catch (error) {
     state.chats.push({ role: "bot", text: `${aiReply(text)}\n\n（DeepSeek 暂时连接不上，我先用本地安抚回复陪你一下。）` });
+    shouldRenderOnFinish = true;
     showToast("DeepSeek 暂时连接失败，已使用本地回复");
   } finally {
     state.chatLoading = false;
     saveState();
-    if (state.page === "chat") render();
+    if (state.page === "chat") {
+      if (shouldRenderOnFinish) render();
+      scrollChatToBottom();
+    }
   }
+}
+
+function getLastBotBubble() {
+  const bubbles = document.querySelectorAll(".bubble-row.bot p");
+  return bubbles[bubbles.length - 1] || null;
+}
+
+function scrollChatToBottom() {
+  window.setTimeout(() => {
+    const screen = document.querySelector(".screen");
+    const chatList = document.querySelector("#chatList");
+    if (chatList) chatList.scrollTop = chatList.scrollHeight;
+    if (screen) screen.scrollTop = screen.scrollHeight;
+  }, 0);
 }
 
 function aiReply(text) {
