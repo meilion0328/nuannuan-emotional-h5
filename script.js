@@ -51,6 +51,7 @@ const defaultState = {
     { role: "user", text: "今天工作很累，感觉自己什么都做不好..." },
     { role: "bot", text: "听起来你今天承受了很多。先把肩膀放松一点，我们一起把事情拆小，好吗？" },
   ],
+  chatLoading: false,
   usageRecords: [
     { type: "AI 陪伴", detail: "完成一次压力安抚对话", time: "今天 21:18" },
     { type: "泄压舱", detail: "戳破 23 个解压泡泡", time: "今天 20:42" },
@@ -309,7 +310,7 @@ function renderChat() {
       ${pageHead("暖暖", "● 在线", "home")}
       <div class="chat-list" id="chatList">
         ${state.chats.map((msg) => `<article class="bubble-row ${msg.role}">${msg.role === "bot" ? `<span class="avatar">☁</span>` : ""}<p>${h(msg.text)}</p></article>`).join("")}
-        <article class="typing"><span></span><span></span><span></span></article>
+        ${state.chatLoading ? `<article class="typing"><span></span><span></span><span></span></article>` : ""}
       </div>
       <div class="chat-actions">
         <button data-go="call" type="button"><b>☎</b>语音通话</button>
@@ -904,11 +905,8 @@ function bindActions() {
       const input = document.querySelector("#chatInput");
       const text = input.value.trim();
       if (!text) return;
-      state.chats.push({ role: "user", text });
-      state.chats.push({ role: "bot", text: aiReply(text) });
-      recordUsage("AI 陪伴", `发送消息：${text.slice(0, 16)}`);
-      saveState();
-      render();
+      input.value = "";
+      sendChat(text);
     });
   }
 
@@ -1023,10 +1021,42 @@ function inferTab(page) {
 
 function sendChat(text) {
   state.chats.push({ role: "user", text });
-  state.chats.push({ role: "bot", text: aiReply(text) });
-  recordUsage("AI 陪伴", `快捷对话：${text.slice(0, 16)}`);
+  state.chatLoading = true;
+  recordUsage("AI 陪伴", `发送消息：${text.slice(0, 16)}`);
   saveState();
-  go("chat", "companion");
+  state.page = "chat";
+  state.tab = "companion";
+  render();
+  requestDeepSeekReply(text);
+}
+
+async function requestDeepSeekReply(text) {
+  try {
+    const endpoint = window.location.protocol === "file:" ? "http://localhost:4173/api/chat" : "/api/chat";
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: text,
+        history: state.chats.slice(-12).map((item) => ({
+          role: item.role === "bot" ? "assistant" : "user",
+          content: item.text,
+        })),
+      }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data?.error || "DeepSeek request failed");
+    }
+    state.chats.push({ role: "bot", text: data.reply || aiReply(text) });
+  } catch (error) {
+    state.chats.push({ role: "bot", text: `${aiReply(text)}\n\n（DeepSeek 暂时连接不上，我先用本地安抚回复陪你一下。）` });
+    showToast("DeepSeek 暂时连接失败，已使用本地回复");
+  } finally {
+    state.chatLoading = false;
+    saveState();
+    if (state.page === "chat") render();
+  }
 }
 
 function aiReply(text) {
