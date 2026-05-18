@@ -357,7 +357,7 @@ input {
 
 .ghost-btn {
   color: var(--muted);
-  background: transparent;
+  background: rgba(255, 255, 255, 0.95);
 }
 
 .auth-actions {
@@ -655,7 +655,7 @@ input {
   color: #878496;
   font-size: 13px;
   line-height: 1.2;
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .companion-hero .mascot {
@@ -666,13 +666,19 @@ input {
   z-index: 1;
   width: 236px;
   height: 214px;
-  transform: none;
+  transform: translateX(-8px) rotate(-8deg);
+  transform-origin: 48% 76%;
   animation: companion-float 3.2s ease-in-out infinite;
 }
 
 @keyframes companion-float {
+  0%,
+  100% {
+    transform: translateX(-8px) translateY(0) rotate(-8deg);
+  }
+
   50% {
-    transform: translateY(-8px);
+    transform: translateX(-8px) translateY(-8px) rotate(-8deg);
   }
 }
 
@@ -722,10 +728,10 @@ input {
   gap: 22px;
   overflow: hidden auto;
   margin: 0;
-  padding: 0 0 12px;
+  padding: 0 0 34px;
   scrollbar-width: none;
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 44px, #000 100%);
-  mask-image: linear-gradient(to bottom, transparent 0, #000 44px, #000 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 42px, #000 calc(100% - 52px), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 42px, #000 calc(100% - 52px), transparent 100%);
 }
 
 .companion-chat-list::-webkit-scrollbar {
@@ -849,8 +855,9 @@ input {
   padding: 0 16px;
   border-radius: 999px;
   color: #817d91;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 14px 28px rgba(111, 102, 184, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 10px 24px rgba(117, 103, 184, 0.06);
   text-align: center;
   white-space: nowrap;
   font-size: 13px;
