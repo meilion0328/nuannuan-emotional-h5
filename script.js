@@ -48,9 +48,9 @@ const defaultState = {
   posts: defaultPosts,
   liked: {},
   chats: [
-    { role: "bot", text: "我在认真听你说。无论是什么情绪，都可以慢慢讲给我听。" },
-    { role: "user", text: "今天工作很累，感觉自己什么都做不好..." },
-    { role: "bot", text: "听起来你今天承受了很多。先把肩膀放松一点，我们一起把事情拆小，好吗？" },
+    { role: "bot", text: "我在这里。你可以不用组织得很完整，想到哪里说到哪里就好。" },
+    { role: "user", text: "今天有点委屈" },
+    { role: "bot", text: "你愿意把“委屈”这个感觉说出来，已经是很勇敢的一步。有些委屈就像淋湿的衣服，不一定要马上烘干，也可以先把它晾在这里。你愿意的话，可以再多说说今天发生了什么。" },
   ],
   chatLoading: false,
   usageRecords: [
@@ -91,10 +91,145 @@ let screamTimer = 0;
 let activeStream = null;
 
 const quickTopicBatches = [
-  ["最近有点焦虑...", "和朋友闹矛盾了", "压力好大，睡不着", "没什么，就是想聊聊"],
-  ["今天有点委屈", "突然很想哭", "感觉没人懂我", "心里堵得慌"],
-  ["被人否定了", "有点孤单", "不知道为什么烦", "想安静待一会儿"],
-  ["明天不想上班", "对自己很失望", "关系让我好累", "想把情绪放一放"],
+  ["今天有点委屈", "突然很想哭", "突然很烦", "心里堵得慌", "想安静一下"],
+  ["感觉没人懂我", "有点孤单", "被人否定了", "关系让我好累", "想把情绪放一放"],
+  ["压力好大", "不知道为什么烦", "明天不想上班", "对自己很失望", "想慢慢说说"],
+  ["睡不太着", "有点累了", "突然很低落", "想被听见", "不想解释太多"],
+];
+
+const timeGreetingSlots = [
+  {
+    start: 23,
+    end: 1,
+    messages: [
+      "夜已深沉，放下手头所有琐事，卸下一身疲惫，安心入眠好好休息吧。",
+      "夜色沉沉，放下所有忙碌，好好睡一觉吧",
+      "夜深人静，安然入睡",
+      "深夜别胡思乱想，所有心事都暂时放下",
+      "肝经休养，尽早入睡，切勿熬夜伤身",
+    ],
+  },
+  {
+    start: 1,
+    end: 3,
+    messages: [
+      "万籁俱寂，夜色正浓，安稳熟睡，养足精神静待天明。",
+      "万籁俱寂，安心熟睡，好好安抚疲惫身心",
+      "深夜安眠，静养身心",
+      "别独自内耗，好好睡觉就是最好治愈",
+      "深度安眠，调养气血，养好精神",
+    ],
+  },
+  {
+    start: 3,
+    end: 5,
+    messages: [
+      "晨光将启，长夜将尽，静静安睡，迎接崭新清晨。",
+      "长夜将尽，静心安睡，静待清晨微光",
+      "静待天明，安稳熟睡",
+      "抛开烦心事，安安稳稳睡到天亮",
+      "肺经当令，安稳沉睡，舒缓身心",
+    ],
+  },
+  {
+    start: 5,
+    end: 7,
+    messages: [
+      "天刚破晓，朝阳初升，缓缓起身，开启元气满满的一天。",
+      "晨光初醒，慢慢起身，拥抱崭新的一天",
+      "晨起向阳，元气出发",
+      "新晨来临，把昨日坏情绪统统丢掉",
+      "顺应天时，早起舒展，疏通筋骨",
+    ],
+  },
+  {
+    start: 7,
+    end: 9,
+    messages: [
+      "清晨正好，别匆忙赶路，记得吃一份热乎乎的早餐呀。",
+      "清晨时光温柔，记得吃一顿暖心早餐",
+      "三餐温热，不负晨光",
+      "好好善待自己，从一顿早餐开始",
+      "脾胃活跃，按时进食，养护肠胃",
+    ],
+  },
+  {
+    start: 9,
+    end: 11,
+    messages: [
+      "半日时光悠然度过，静心做事，劳逸结合舒缓身心。",
+      "静心凝神，平稳气息，调养心神",
+      "放宽心态，凡事不必事事强求",
+      "从容度日，平和心安",
+      "静心做事，劳逸结合，别让自己太累",
+    ],
+  },
+  {
+    start: 11,
+    end: 13,
+    messages: [
+      "时至正午，忙碌暂且停下，好好享用午餐，稍作放松。",
+      "心经当令，午饭清淡，闭目养神",
+      "停下焦躁，好好吃饭治愈坏心情",
+      "按时吃饭，适时休息",
+      "时至正午，停下奔波，好好享用午餐",
+    ],
+  },
+  {
+    start: 13,
+    end: 15,
+    messages: [
+      "午后慵懒，小憩片刻养精神，驱散困意舒心自在。",
+      "舒缓脾胃，轻歇静养，调和气血",
+      "允许自己偷懒片刻，不必一直坚强",
+      "午后小憩，舒缓精神",
+      "午后慵懒，小憩片刻，舒缓一身倦意",
+    ],
+  },
+  {
+    start: 15,
+    end: 17,
+    messages: [
+      "午后时光惬意悠然，忙里偷闲，喝点温水舒缓心情。",
+      "补水润身，活动筋骨，舒缓乏累",
+      "心事慢慢释怀，日子慢慢变好",
+      "忙里偷闲，舒心自在",
+      "闲歇片刻，喝杯温水，放松紧绷心情",
+    ],
+  },
+  {
+    start: 17,
+    end: 19,
+    messages: [
+      "夕阳西下，日暮将至，结束忙碌，奔赴温馨日常。",
+      "调养肾脏，清淡饮食，放松身心",
+      "一日烦恼随风散去，轻松迎接夜晚",
+      "落日归心，褪去疲惫",
+      "夕阳西下，结束忙碌，奔赴温柔烟火",
+    ],
+  },
+  {
+    start: 19,
+    end: 21,
+    messages: [
+      "华灯初上，夜色温柔，卸下忙碌，好好陪伴自己与家人。",
+      "静心安神，少思少虑，平和心境",
+      "与自己和解，安抚所有不安情绪",
+      "静享时光，平复心绪",
+      "夜色渐柔，卸下烦恼，好好陪伴自己",
+    ],
+  },
+  {
+    start: 21,
+    end: 23,
+    messages: [
+      "夜色渐浓，放下电子产品，放松身心，准备安然入睡。",
+      "放松经络，放下琐事，预备深睡",
+      "清空杂念，睡个安稳好觉治愈自己",
+      "静心入眠，一夜安稳",
+      "早点放下手机，放松身心，安然入眠",
+    ],
+  },
 ];
 
 const sendIcon = `
@@ -106,7 +241,28 @@ const sendIcon = `
 
 function renderQuickTopicButtons() {
   const topics = quickTopicBatches[state.quickTopicBatch % quickTopicBatches.length];
-  return topics.map((text) => `<button data-quick="${text}" type="button">${text}</button>`).join("");
+  const icons = ["♡", "☔", "〰", "○", "✦"];
+  return topics.map((text, index) => `<button data-quick="${text}" type="button"><span>${icons[index % icons.length]}</span>${text}</button>`).join("");
+}
+
+function getStatusTime(date = new Date()) {
+  return `${date.getHours()}:${String(date.getMinutes()).padStart(2, "0")}`;
+}
+
+function getTimeGreeting(date = new Date()) {
+  const hour = date.getHours();
+  const slotIndex = timeGreetingSlots.findIndex((item) => (
+    item.start < item.end
+      ? hour >= item.start && hour < item.end
+      : hour >= item.start || hour < item.end
+  ));
+  const activeIndex = slotIndex >= 0 ? slotIndex : 0;
+  const slot = timeGreetingSlots[activeIndex];
+  const baseDate = new Date(2026, 0, 1);
+  const today = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const dayIndex = Math.floor((today - baseDate) / 86400000);
+  const messageIndex = ((dayIndex + activeIndex) % slot.messages.length + slot.messages.length) % slot.messages.length;
+  return slot.messages[messageIndex];
 }
 
 function loadState() {
@@ -199,13 +355,20 @@ function render() {
 
   app.innerHTML = `
     <section class="phone">
-      <div class="status-bar"><span>9:41</span><span>●●● 5G ▰</span></div>
+      <div class="status-bar">
+        <span>${getStatusTime()}</span>
+        <span class="status-icons" aria-hidden="true">
+          <span class="signal-bars"><i></i><i></i><i></i><i></i></span>
+          <span class="wifi-icon"></span>
+          <span class="battery-icon"></span>
+        </span>
+      </div>
       ${renderCurrentPage()}
       ${renderBottomNav()}
     </section>
   `;
   bindActions();
-  if (state.page === "chat") scrollChatToBottom();
+  if (isCompanionChatPage()) scrollChatToBottom();
 }
 
 function renderAuth() {
@@ -275,14 +438,14 @@ function renderBottomNav() {
   const hidden = hiddenPages.includes(state.page) || state.page.startsWith("resonanceDetail:") || state.page.startsWith("policy:");
   if (hidden) return "";
   const tabs = [
-    ["companion", "home", "☁", "陪伴"],
-    ["resonance", "resonanceHome", "♥", "共鸣"],
-    ["relief", "reliefHome", "⌂", "泄压舱"],
-    ["mine", "mineHome", "♙", "我的"],
+    ["companion", "home", "chat", "倾诉"],
+    ["resonance", "resonanceHome", "heart", "广场"],
+    ["relief", "reliefHome", "leaf", "释放"],
+    ["mine", "mineHome", "user", "我的"],
   ];
   return `
     <nav class="bottom-nav">
-      ${tabs.map(([tab, page, icon, label]) => `<button class="${state.tab === tab ? "active" : ""}" data-go="${page}" data-tab="${tab}" type="button"><b>${icon}</b>${label}</button>`).join("")}
+      ${tabs.map(([tab, page, icon, label]) => `<button class="${state.tab === tab ? "active" : ""}" data-go="${page}" data-tab="${tab}" type="button"><b class="nav-icon nav-${icon}"></b>${label}</button>`).join("")}
     </nav>
   `;
 }
@@ -307,34 +470,38 @@ function mascot() {
   `;
 }
 
+function renderCompanionMessages() {
+  return state.chats.slice(-6).map((msg) => `
+    <article class="companion-bubble-row ${msg.role}">
+      ${msg.role === "bot" ? `<span class="line-avatar" aria-hidden="true"></span>` : ""}
+      <p>${h(msg.text)}</p>
+      ${msg.role === "user" ? `<span class="line-avatar" aria-hidden="true"></span>` : ""}
+    </article>
+  `).join("");
+}
+
 function renderHome() {
+  const greeting = getTimeGreeting();
   return `
-    <section class="screen">
-      <header class="topbar">
-        <button class="icon-btn" data-go="analysis" type="button">♡</button>
-        <button class="scene-switch" data-toast="已切换为云朵耳机形象" type="button">切换形象</button>
-      </header>
-      <div class="home-hero">
-        <p class="eyebrow">晚上好，</p>
-        <h1>我在这里陪着你</h1>
-        <p class="memory-pill">记住：你的感受很重要</p>
+    <section class="screen companion-screen">
+      <div class="companion-hero">
+        <div class="companion-copy">
+          <p class="eyebrow">${greeting}</p>
+          <h1>我会一直陪着你</h1>
+        </div>
         ${mascot()}
       </div>
-      <form class="search-row" id="homeTalkForm">
+      <div class="companion-chat-list" id="chatList">
+        ${renderCompanionMessages()}
+        ${state.chatLoading ? `<article class="typing companion-typing"><span></span><span></span><span></span></article>` : ""}
+      </div>
+      <div class="quick-grid companion-quick-strip">
+        ${renderQuickTopicButtons()}
+      </div>
+      <form class="companion-compose" id="homeTalkForm">
         <input id="homeTalkInput" placeholder="想和我聊聊什么呢？" autocomplete="off" />
         <button class="send-btn" type="submit" aria-label="发送">${sendIcon}</button>
       </form>
-      <div class="quick-head">
-        <span>可以从这里开始</span>
-        <button id="refreshQuickTopics" type="button">换一批</button>
-      </div>
-      <div class="quick-grid">
-        ${renderQuickTopicButtons()}
-      </div>
-      <div class="mini-panel">
-        <div><span>♡</span><p>今日陪伴</p><strong>${Math.max(26, state.chats.length * 3)} 分钟</strong></div>
-        <div><span>✦</span><p>情绪温度</p><strong>柔和</strong></div>
-      </div>
     </section>
   `;
 }
@@ -978,9 +1145,52 @@ function bindActions() {
   document.querySelectorAll("[data-toast]").forEach((node) => node.addEventListener("click", () => showToast(node.dataset.toast)));
   const quickGrid = document.querySelector(".quick-grid");
   if (quickGrid) {
+    let dragged = false;
+    if (quickGrid.classList.contains("companion-quick-strip")) {
+      let startX = 0;
+      let startScrollLeft = 0;
+      let isDragging = false;
+
+      quickGrid.addEventListener("pointerdown", (event) => {
+        startX = event.clientX;
+        startScrollLeft = quickGrid.scrollLeft;
+        dragged = false;
+        isDragging = true;
+        quickGrid.classList.add("dragging");
+        quickGrid.setPointerCapture?.(event.pointerId);
+      });
+
+      quickGrid.addEventListener("pointermove", (event) => {
+        if (!isDragging) return;
+        const deltaX = event.clientX - startX;
+        if (Math.abs(deltaX) > 4) dragged = true;
+        if (dragged) {
+          quickGrid.scrollLeft = startScrollLeft - deltaX;
+          event.preventDefault();
+        }
+      });
+
+      const stopDragging = (event) => {
+        if (!isDragging) return;
+        isDragging = false;
+        quickGrid.classList.remove("dragging");
+        quickGrid.releasePointerCapture?.(event.pointerId);
+      };
+
+      quickGrid.addEventListener("pointerup", stopDragging);
+      quickGrid.addEventListener("pointercancel", stopDragging);
+      quickGrid.addEventListener("pointerleave", stopDragging);
+    }
+
     quickGrid.addEventListener("click", (event) => {
+      if (quickGrid.classList.contains("companion-quick-strip") && dragged) {
+        dragged = false;
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
       const quickButton = event.target.closest?.("[data-quick]");
-      if (quickButton) sendChat(quickButton.dataset.quick);
+      if (quickButton) sendChat(quickButton.dataset.quick, { stayOnPage: state.page === "home" });
     });
   }
   const refreshQuickTopics = document.querySelector("#refreshQuickTopics");
@@ -997,8 +1207,10 @@ function bindActions() {
   if (homeForm) {
     homeForm.addEventListener("submit", (event) => {
       event.preventDefault();
-      const text = document.querySelector("#homeTalkInput").value.trim() || "我想和你聊聊";
-      sendChat(text);
+      const input = document.querySelector("#homeTalkInput");
+      const text = input.value.trim() || "我想和你聊聊";
+      input.value = "";
+      sendChat(text, { stayOnPage: true });
     });
   }
 
@@ -1129,12 +1341,16 @@ function inferTab(page) {
   return "companion";
 }
 
-function sendChat(text) {
+function isCompanionChatPage() {
+  return state.page === "chat" || state.page === "home";
+}
+
+function sendChat(text, options = {}) {
   state.chats.push({ role: "user", text });
   state.chatLoading = true;
   recordUsage("AI 陪伴", `发送消息：${text.slice(0, 16)}`);
   saveState();
-  state.page = "chat";
+  if (!options.stayOnPage) state.page = "chat";
   state.tab = "companion";
   render();
   scrollChatToBottom();
@@ -1165,7 +1381,7 @@ async function requestDeepSeekReply(text) {
     state.chats.push({ role: "bot", text: "" });
     const botIndex = state.chats.length - 1;
     saveState();
-    if (state.page === "chat") render();
+    if (isCompanionChatPage()) render();
     let botBubble = getLastBotBubble();
 
     const reader = response.body.getReader();
@@ -1177,7 +1393,7 @@ async function requestDeepSeekReply(text) {
       const chunk = decoder.decode(value, { stream: true });
       if (!chunk) continue;
       state.chats[botIndex].text += chunk;
-      if (state.page === "chat") {
+      if (isCompanionChatPage()) {
         botBubble ||= getLastBotBubble();
         if (botBubble) {
           botBubble.textContent = state.chats[botIndex].text;
@@ -1188,7 +1404,7 @@ async function requestDeepSeekReply(text) {
 
     if (!state.chats[botIndex].text.trim()) {
       state.chats[botIndex].text = aiReply(text);
-      if (state.page === "chat") {
+      if (isCompanionChatPage()) {
         botBubble ||= getLastBotBubble();
         if (botBubble) botBubble.textContent = state.chats[botIndex].text;
       }
@@ -1200,7 +1416,7 @@ async function requestDeepSeekReply(text) {
   } finally {
     state.chatLoading = false;
     saveState();
-    if (state.page === "chat") {
+    if (isCompanionChatPage()) {
       if (shouldRenderOnFinish) render();
       scrollChatToBottom();
     }
@@ -1208,7 +1424,7 @@ async function requestDeepSeekReply(text) {
 }
 
 function getLastBotBubble() {
-  const bubbles = document.querySelectorAll(".bubble-row.bot p");
+  const bubbles = document.querySelectorAll(".bubble-row.bot p, .companion-bubble-row.bot p");
   return bubbles[bubbles.length - 1] || null;
 }
 

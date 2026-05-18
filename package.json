@@ -1,0 +1,14 @@
+{
+  "name": "nuannuan-emotional-h5",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Nuannuan emotional companion mobile H5 app with a local Node DeepSeek proxy.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "check": "node --check server.js && node --check script.js && node --check api/chat.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
