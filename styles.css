@@ -379,6 +379,12 @@ input {
   margin-bottom: 16px;
 }
 
+.screen:not(.companion-screen) > .page-head,
+.screen:not(.companion-screen) > .profile-head,
+.night-screen > .page-head {
+  margin-top: 20px;
+}
+
 .page-head.center {
   justify-content: center;
 }
@@ -626,7 +632,7 @@ input {
 .companion-copy {
   position: absolute;
   left: 8.8%;
-  top: 28.8%;
+  top: calc(28.8% - 25px);
   z-index: 4;
 }
 
@@ -661,7 +667,7 @@ input {
 .companion-hero .mascot {
   left: auto;
   right: -7%;
-  top: 33%;
+  top: calc(33% - 25px);
   bottom: auto;
   z-index: 1;
   width: 236px;
@@ -719,8 +725,8 @@ input {
   position: absolute;
   left: 7.2%;
   right: 7.2%;
-  top: 28.4%;
-  bottom: 31.5%;
+  top: calc(28.4% - 18px);
+  bottom: calc(31.5% + 6px);
   z-index: 10;
   min-height: 0;
   display: flex;
@@ -728,10 +734,10 @@ input {
   gap: 22px;
   overflow: hidden auto;
   margin: 0;
-  padding: 0 0 34px;
+  padding: 18px 0;
   scrollbar-width: none;
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 42px, #000 calc(100% - 52px), transparent 100%);
-  mask-image: linear-gradient(to bottom, transparent 0, #000 42px, #000 calc(100% - 52px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 42px, #000 calc(100% - 42px), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 42px, #000 calc(100% - 42px), transparent 100%);
 }
 
 .companion-chat-list::-webkit-scrollbar {

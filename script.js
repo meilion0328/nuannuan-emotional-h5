@@ -668,7 +668,7 @@ function renderPostCard(post) {
 function renderResonanceHome() {
   const posts = visiblePosts().slice(0, 2);
   return `
-    <section class="screen">
+    <section class="screen resonance-home-screen">
       <header class="page-head"><div><h2>心情共鸣</h2><p>此刻的你，不是一个人</p></div><button class="small-pill" data-go="resonanceBrowse" type="button">全部</button></header>
       <article class="resonance-hero"><p>今日心情共鸣</p><strong>${state.posts.reduce((n, p) => n + p.resonance, 0).toLocaleString()}</strong><span>人正在跟相似感受轻轻相遇</span></article>
       <button class="primary-btn" style="margin-top:14px;" data-go="resonancePublish" type="button">发布此刻心情</button>
@@ -917,7 +917,7 @@ function startBreathIfNeeded() {
 function renderMine() {
   const user = state.users[state.user] || { nickname: "小星星" };
   return `
-    <section class="screen">
+    <section class="screen mine-home-screen">
       <header class="profile-head"><div class="profile-avatar"><div class="mini-mascot"></div></div><div><h2>${h(user.nickname || state.user)}</h2><p>ID: 12345678 · 小包容守护中</p></div></header>
       <article class="journal-card"><div><span>心情日记</span><strong>今天最好的自己</strong></div><button data-go="journal" type="button">去记录</button></article>
       <div class="settings-list">
