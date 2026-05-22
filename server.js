@@ -71,8 +71,8 @@ const server = http.createServer(async (req, res) => {
   serveStatic(req, res);
 });
 
-server.listen(port, () => {
-  console.log(`Nuannuan H5 is running at http://localhost:${port}`);
+server.listen(port, "0.0.0.0", () => {
+  console.log(`Nuannuan H5 is running at http://0.0.0.0:${port}`);
 });
 
 function loadEnv(filePath) {

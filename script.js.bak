@@ -76,7 +76,6 @@ const defaultState = {
   videoSeconds: 16,
   doodleColor: "#8066f4",
   privacy: { anonymous: true, randomHistory: true, noRecommend: false },
-  customAvatar: null,
   theme: { color: "purple", mode: "light", font: "normal" },
   breath: { running: false, step: 0, round: 1 },
 };
@@ -356,10 +355,17 @@ function render() {
 
   app.innerHTML = `
     <section class="phone">
+      <div class="status-bar">
+        <span>${getStatusTime()}</span>
+        <span class="status-icons" aria-hidden="true">
+          <span class="signal-bars"><i></i><i></i><i></i><i></i></span>
+          <span class="wifi-icon"></span>
+          <span class="battery-icon"></span>
+        </span>
+      </div>
       ${renderCurrentPage()}
       ${renderBottomNav()}
     </section>
-    ${renderAvatarModal()}
   `;
   bindActions();
   if (isCompanionChatPage()) scrollChatToBottom();
@@ -501,16 +507,11 @@ function renderHome() {
 }
 
 function renderChat() {
-  // DEBUG: 检查 customAvatar 状态
-  console.log('[DEBUG] renderChat - customAvatar:', state.customAvatar ? '有值(' + state.customAvatar.length + '字符)' : 'null');
-  const userAvatarHtml = state.customAvatar 
-    ? `<img src="${state.customAvatar}" class="chat-user-avatar" />`
-    : `<span class="avatar">●</span>`;
   return `
     <section class="screen no-nav chat-screen">
       ${pageHead("暖暖", "● 在线", "home")}
       <div class="chat-list" id="chatList">
-        ${state.chats.map((msg) => `<article class="bubble-row ${msg.role}">${msg.role === "bot" ? `<span class="avatar">☁</span>` : userAvatarHtml}<p>${h(msg.text)}</p></article>`).join("")}
+        ${state.chats.map((msg) => `<article class="bubble-row ${msg.role}">${msg.role === "bot" ? `<span class="avatar">☁</span>` : ""}<p>${h(msg.text)}</p></article>`).join("")}
         ${state.chatLoading ? `<article class="typing"><span></span><span></span><span></span></article>` : ""}
       </div>
       <div class="chat-actions">
@@ -651,13 +652,9 @@ function visiblePosts(filter = "全部") {
 }
 
 function renderPostCard(post) {
-  const avatarHtml = post.showAvatar && post.avatarData 
-    ? `<img src="${post.avatarData}" class="post-avatar" />`
-    : `<span class="avatar">●</span>`;
-  const userName = post.showAvatar && post.avatarData ? (state.users[state.user]?.nickname || state.user) : "匿名用户";
   return `
     <article class="post-card" data-detail="${post.id}">
-      <div class="post-head">${avatarHtml}<div><strong>${userName}</strong><small>${post.time}</small></div></div>
+      <div class="post-head"><span class="avatar">●</span><div><strong>匿名用户</strong><small>${post.time}</small></div></div>
       <h3>${h(post.text)}</h3>
       <p>#${post.tag} · ${post.mood}</p>
       <div class="post-foot">
@@ -693,9 +690,6 @@ function renderResonanceBrowse(filter = state.filter || "全部") {
 }
 
 function renderPublish() {
-  const avatarHtml = state.customAvatar 
-    ? `<img src="${state.customAvatar}" class="publish-avatar-preview" />`
-    : `<div class="mini-mascot"></div>`;
   return `
     <section class="screen no-nav">
       <div class="publish-actions"><button class="ghost-btn" data-go="resonanceHome" type="button">取消</button><strong>发布心情</strong><button class="secondary-btn" id="submitPost" type="button">发布</button></div>
@@ -704,19 +698,6 @@ function renderPublish() {
       <div class="tag-row">${["压力", "难过", "迷茫", "开心", "其他"].map((tag) => `<button class="${selectedPublishTag === tag ? "selected" : ""}" data-publish-tag="${tag}" type="button">#${tag}</button>`).join("")}</div>
       <p style="color:var(--muted);font-weight:800;">此刻心情是...</p>
       <div class="emoji-row">${["难过", "焦虑", "平静", "开心", "愤怒"].map((mood) => `<button class="${selectedPublishMood === mood ? "selected" : ""}" data-publish-mood="${mood}" type="button"><b>${moodIcon(mood)}</b>${mood}</button>`).join("")}</div>
-      <div class="publish-avatar-option">
-        <p style="color:var(--muted);font-weight:800;margin-bottom:12px;">发布身份</p>
-        <div class="avatar-option-row">
-          <button class="avatar-choice ${state.publishWithAvatar !== false ? "active" : ""}" id="showAvatarBtn" type="button">
-            ${avatarHtml}
-            <span>显示头像</span>
-          </button>
-          <button class="avatar-choice ${state.publishWithAvatar === false ? "active" : ""}" id="anonymousBtn" type="button">
-            <span class="anonymous-icon">🎭</span>
-            <span>匿名发布</span>
-          </button>
-        </div>
-      </div>
       <div class="switch-row"><div><strong>仅自己可见</strong><p style="margin:4px 0 0;color:var(--muted);font-size:12px;">开启后，只有你自己能看到这条心情</p></div><button class="switch" id="privateSwitch" type="button"><i></i></button></div>
     </section>
   `;
@@ -729,15 +710,11 @@ function moodIcon(mood) {
 function renderResonanceDetail(id) {
   const post = state.posts.find((item) => item.id === id) || state.posts[0];
   const colors = ["#c5b9ff", "#9ce7d9", "#ffc6a8", "#ff9ab5", "#bfc9ff", "#ffd28f", "#d7b8ff", "#ace7ff", "#ffd5e6", "#c4f1cb"];
-  const avatarHtml = post.showAvatar && post.avatarData 
-    ? `<img src="${post.avatarData}" class="post-avatar" />`
-    : `<span class="avatar">●</span>`;
-  const userName = post.showAvatar && post.avatarData ? (state.users[state.user]?.nickname || state.user) : "匿名用户";
   return `
     <section class="night-screen">
       <header class="page-head"><button class="back-btn" data-go="resonanceBrowse" type="button">‹</button><div></div><button class="icon-btn" data-toast="更多共鸣操作" type="button">⋯</button></header>
       <article class="post-card" style="background:transparent;box-shadow:none;min-height:auto;padding:20px 0 0;">
-        <div class="post-head">${avatarHtml}<div><strong>${userName}</strong><small>${post.time}</small></div></div>
+        <div class="post-head"><span class="avatar">●</span><div><strong>匿名用户</strong><small>${post.time}</small></div></div>
         <h3>${h(post.text)}</h3>
       </article>
       <div class="detail-panel">
@@ -939,18 +916,9 @@ function startBreathIfNeeded() {
 
 function renderMine() {
   const user = state.users[state.user] || { nickname: "小星星" };
-  const avatarHtml = state.customAvatar 
-    ? `<img src="${state.customAvatar}" class="custom-avatar-display" />`
-    : `<div class="mini-mascot"></div>`;
   return `
     <section class="screen mine-home-screen">
-      <header class="profile-head">
-        <div class="profile-avatar" onclick="openAvatarModal()" role="button" tabindex="0" aria-label="点击更换头像">
-          ${avatarHtml}
-          <div class="avatar-edit-hint">编辑</div>
-        </div>
-        <div><h2>${h(user.nickname || state.user)}</h2><p>ID: 12345678 · 小包容守护中</p></div>
-      </header>
+      <header class="profile-head"><div class="profile-avatar"><div class="mini-mascot"></div></div><div><h2>${h(user.nickname || state.user)}</h2><p>ID: 12345678 · 小包容守护中</p></div></header>
       <article class="journal-card"><div><span>心情日记</span><strong>今天最好的自己</strong></div><button data-go="journal" type="button">去记录</button></article>
       <div class="settings-list">
         <button data-go="favorites" type="button"><span>☆</span>我的收藏<i>›</i></button>
@@ -1280,21 +1248,6 @@ function bindActions() {
 
   const privateSwitch = document.querySelector("#privateSwitch");
   if (privateSwitch) privateSwitch.addEventListener("click", () => privateSwitch.classList.toggle("on"));
-  
-  // 发布身份选择
-  const showAvatarBtn = document.querySelector("#showAvatarBtn");
-  if (showAvatarBtn) showAvatarBtn.addEventListener("click", () => {
-    state.publishWithAvatar = true;
-    saveState();
-    render();
-  });
-  const anonymousBtn = document.querySelector("#anonymousBtn");
-  if (anonymousBtn) anonymousBtn.addEventListener("click", () => {
-    state.publishWithAvatar = false;
-    saveState();
-    render();
-  });
-  
   const submitPost = document.querySelector("#submitPost");
   if (submitPost) submitPost.addEventListener("click", publishPost);
 
@@ -1407,7 +1360,6 @@ function sendChat(text, options = {}) {
 async function requestDeepSeekReply(text) {
   let shouldRenderOnFinish = false;
   try {
-    // 用相对路径 /api/chat：同一服务器下自动走本机API，手机和电脑都OK
     const endpoint = window.location.protocol === "file:" ? "http://localhost:4173/api/chat" : "/api/chat";
     const response = await fetch(endpoint, {
       method: "POST",
@@ -1458,10 +1410,9 @@ async function requestDeepSeekReply(text) {
       }
     }
   } catch (error) {
-    const offlineReply = aiReply(text);
-    state.chats.push({ role: "bot", text: offlineReply });
+    state.chats.push({ role: "bot", text: aiReply(text) });
     shouldRenderOnFinish = true;
-    showToast("暖暖正在赶来的路上，先听我说几句 ✨");
+    showToast("DeepSeek 暂时连接失败，已使用本地回复");
   } finally {
     state.chatLoading = false;
     saveState();
@@ -1531,7 +1482,6 @@ function publishPost() {
   const text = document.querySelector("#postText").value.trim();
   if (!text) return showToast("请输入心情内容");
   const isPrivate = document.querySelector("#privateSwitch").classList.contains("on");
-  const showAvatar = state.publishWithAvatar !== false && state.customAvatar;
   const tag = selectedPublishTag === "压力" ? "焦虑" : selectedPublishTag;
   state.posts.unshift({
     id: `p${Date.now()}`,
@@ -1543,10 +1493,8 @@ function publishPost() {
     resonance: isPrivate ? 1 : 12,
     private: isPrivate,
     owner: state.user,
-    showAvatar,
-    avatarData: showAvatar ? state.customAvatar : null,
   });
-  recordUsage("心情共鸣", showAvatar ? "发布了一条带头像的心情" : "发布了一条匿名心情");
+  recordUsage("心情共鸣", "发布了一条匿名心情");
   showToast("心情已保存到本地模拟数据");
   go("resonanceHome", "resonance");
 }
@@ -1762,223 +1710,6 @@ function submitFeedbackForm() {
   recordUsage("帮助与反馈", "提交了一条反馈");
   showToast("反馈已收到，谢谢你");
   render();
-}
-
-
-// === 头像更换功能 ===
-function openAvatarModal() {
-  state._avatarModal = 'select';
-  render();
-}
-
-function closeAvatarModal() {
-  if (state._avatarStream) {
-    state._avatarStream.getTracks().forEach(t => t.stop());
-    state._avatarStream = null;
-  }
-  state._avatarModal = null;
-  state._avatarCropImage = null;
-  state._avatarScale = 1;
-  render();
-}
-
-function openCameraForAvatar() {
-  // 先请求权限，iOS需要用户交互触发
-  const constraints = {
-    video: {
-      facingMode: 'user',
-      width: { ideal: 1024, min: 640 },
-      height: { ideal: 1024, min: 640 }
-    },
-    audio: false
-  };
-  
-  navigator.mediaDevices.getUserMedia(constraints).then(stream => {
-    state._avatarStream = stream;
-    state._avatarModal = 'camera';
-    render();
-    
-    // 延迟设置video元素，确保DOM已渲染
-    setTimeout(() => {
-      const video = document.getElementById('avatarCamera');
-      if (video) {
-        // iOS Safari需要设置这些属性
-        video.setAttribute('playsinline', '');
-        video.setAttribute('autoplay', '');
-        video.setAttribute('muted', '');
-        video.srcObject = stream;
-        // 手动触发播放
-        video.play().catch(e => console.log('Video play error:', e));
-      }
-    }, 200);
-  }).catch(err => {
-    console.error('Camera error:', err);
-    // 更友好的错误提示
-    if (err.name === 'NotAllowedError') {
-      showToast('请允许相机权限');
-    } else if (err.name === 'NotFoundError') {
-      showToast('未找到可用相机');
-    } else {
-      showToast('无法访问相机，请检查权限');
-    }
-  });
-}
-
-function captureAvatarPhoto() {
-  const video = document.getElementById('avatarCamera');
-  if (!video || !video.videoWidth) {
-    showToast('相机未准备好，请稍后');
-    return;
-  }
-  
-  const canvas = document.createElement('canvas');
-  // 使用实际视频尺寸
-  canvas.width = video.videoWidth || 640;
-  canvas.height = video.videoHeight || 640;
-  const ctx = canvas.getContext('2d');
-  
-  // 镜像绘制（自拍效果）
-  ctx.translate(canvas.width, 0);
-  ctx.scale(-1, 1);
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-  
-  // 停止相机
-  if (state._avatarStream) {
-    state._avatarStream.getTracks().forEach(t => t.stop());
-    state._avatarStream = null;
-  }
-  
-  state._avatarCropImage = canvas.toDataURL('image/jpeg', 0.92);
-  state._avatarModal = 'crop';
-  state._avatarScale = 1;
-  render();
-}
-
-function openAlbumForAvatar() {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = 'image/*';
-  input.onchange = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      state._avatarCropImage = ev.target.result;
-      state._avatarModal = 'crop';
-      state._avatarScale = 1;
-      render();
-    };
-    reader.readAsDataURL(file);
-  };
-  input.click();
-}
-
-function setAvatarScale(val) {
-  state._avatarScale = Math.max(0.5, Math.min(3, parseFloat(val)));
-  const img = document.getElementById('avatarCropImg');
-  if (img) img.style.transform = `scale(${state._avatarScale})`;
-}
-
-function saveCustomAvatar() {
-  const img = document.getElementById('avatarCropImg');
-  if (!img || !state._avatarCropImage) return;
-  
-  const canvas = document.createElement('canvas');
-  const size = 200;
-  canvas.width = size;
-  canvas.height = size;
-  const ctx = canvas.getContext('2d');
-  
-  const tempImg = new Image();
-  tempImg.onload = () => {
-    const scale = state._avatarScale || 1;
-    const minDim = Math.min(tempImg.width, tempImg.height);
-    const cropSize = minDim / scale;
-    const sx = (tempImg.width - cropSize) / 2;
-    const sy = (tempImg.height - cropSize) / 2;
-    
-    ctx.drawImage(tempImg, sx, sy, cropSize, cropSize, 0, 0, size, size);
-    
-    state.customAvatar = canvas.toDataURL('image/jpeg', 0.85);
-    saveState();
-    closeAvatarModal();
-    showToast('头像已更新 ✓');
-  };
-  tempImg.src = state._avatarCropImage;
-}
-
-function renderAvatarModal() {
-  if (!state._avatarModal) return '';
-  
-  if (state._avatarModal === 'select') {
-    return `
-      <div class="modal-overlay" onclick="closeAvatarModal()">
-        <div class="avatar-modal" onclick="event.stopPropagation()">
-          <h3>更换头像</h3>
-          <div class="avatar-options">
-            <button class="avatar-option-btn" onclick="openCameraForAvatar()">
-              <span class="option-icon">📷</span>
-              <span>拍照</span>
-            </button>
-            <button class="avatar-option-btn" onclick="openAlbumForAvatar()">
-              <span class="option-icon">🖼️</span>
-              <span>从相册选择</span>
-            </button>
-          </div>
-          <button class="modal-cancel-btn" onclick="closeAvatarModal()">取消</button>
-        </div>
-      </div>
-    `;
-  }
-  
-  if (state._avatarModal === 'camera') {
-    return `
-      <div class="modal-overlay">
-        <div class="avatar-modal camera-modal" onclick="event.stopPropagation()">
-          <h3>拍摄头像</h3>
-          <div class="camera-preview-box">
-            <video id="avatarCamera" autoplay playsinline></video>
-            <div class="camera-guide-circle"></div>
-          </div>
-          <div class="camera-actions">
-            <button class="cam-btn cancel" onclick="closeAvatarModal()">取消</button>
-            <button class="cam-btn capture" onclick="captureAvatarPhoto()">📸 拍摄</button>
-          </div>
-        </div>
-      </div>
-    `;
-  }
-  
-  if (state._avatarModal === 'crop') {
-    return `
-      <div class="modal-overlay" onclick="closeAvatarModal()">
-        <div class="avatar-modal crop-modal" onclick="event.stopPropagation()">
-          <h3>调整头像</h3>
-          <div class="crop-preview-area">
-            <div class="crop-circle-container">
-              <img id="avatarCropImg" src="${state._avatarCropImage}" style="transform: scale(${state._avatarScale || 1})" />
-              <div class="crop-guide"></div>
-            </div>
-          </div>
-          <div class="zoom-control">
-            <button class="zoom-btn" onclick="setAvatarScale(${(state._avatarScale || 1) - 0.2})">−</button>
-            <input type="range" class="zoom-range" min="50" max="300" value="${(state._avatarScale || 1) * 100}"
-              oninput="setAvatarScale(this.value / 100)" />
-            <button class="zoom-btn" onclick="setAvatarScale(${(state._avatarScale || 1) + 0.2})">+</button>
-          </div>
-          <p class="crop-hint">拖动滑块调整头像大小</p>
-          <div class="crop-actions">
-            <button class="crop-btn secondary" onclick="closeAvatarModal()">取消</button>
-            <button class="crop-btn primary" onclick="saveCustomAvatar()">保存头像</button>
-          </div>
-        </div>
-      </div>
-    `;
-  }
-  
-  return '';
 }
 
 render();
