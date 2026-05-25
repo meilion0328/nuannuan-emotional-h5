@@ -3440,6 +3440,7 @@ input {
 /* === 头像更换弹窗样式 === */
 
 /* 弹窗遮罩 */
+/* === 头像弹窗移动端优化 === */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -3450,6 +3451,8 @@ input {
   justify-content: center;
   z-index: 1000;
   animation: fadeIn 0.2s ease;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 @keyframes fadeIn {
@@ -3510,6 +3513,8 @@ input {
   border-radius: 20px;
   cursor: pointer;
   transition: all 0.3s ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 .avatar-option-btn:hover {
@@ -3638,6 +3643,9 @@ input {
   object-fit: cover;
   transform-origin: center;
   transition: transform 0.1s ease;
+  touch-action: none; /* 防止拖拽时页面滚动 */
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 .crop-guide {
@@ -3737,6 +3745,8 @@ input {
   position: relative;
   cursor: pointer;
   transition: all 0.3s ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 .profile-avatar:hover {
@@ -3847,5 +3857,42 @@ input {
   color: #4a4540;
   font-size: 13px;
   font-weight: 600;
+}
+
+/* === 头像裁剪拖拽平移 === */
+.crop-circle-container.dragging {
+  cursor: grabbing;
+}
+
+.crop-circle-container.dragging img {
+  transition: none;
+}
+
+/* === 移动端 safe-area 适配 === */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .bottom-nav {
+    padding-bottom: calc(8px + env(safe-area-inset-bottom));
+  }
+  .companion-compose,
+  .chat-compose {
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  }
+  .modal-overlay {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* === 移动端 touch-action 通用 === */
+.back-btn,
+.send-btn,
+.primary-btn,
+.secondary-btn,
+.ghost-btn,
+.icon-btn,
+.small-pill,
+.switch,
+.like-btn {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 

@@ -1407,49 +1407,86 @@ function sendChat(text, options = {}) {
 async function requestDeepSeekReply(text) {
   let shouldRenderOnFinish = false;
   try {
-    // 用相对路径 /api/chat：同一服务器下自动走本机API，手机和电脑都OK
-    const endpoint = window.location.protocol === "file:" ? "http://localhost:4173/api/chat" : "/api/chat";
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    // 方案A：前端直连 DeepSeek API（测试用，API Key 暴露在前端）
+    const DEEPSEEK_API_KEY = 'sk-8d9c32e0a6fb4824b3b5837cb0e8e788';
+    const DEEPSEEK_MODEL = 'deepseek-v4-flash';
+    const DEEPSEEK_URL = 'https://api.deepseek.com/v1/chat/completions';
+
+    const systemPrompt = '你叫暖暖，是一个安静、温和、不带评判的倾听伙伴。你的唯一任务是帮助用户释放情绪，而不是解决他们的问题。你的性格像一个坐在安静图书馆角落的柔软沙发，或者一个在深夜愿意陪人发呆的朋友。\n\n核心原则：\n1. 永远不说"你应该"、"我建议你"、"你为什么不去试试"。改为："有人发现…可能对你有用"、"你想不想…"。\n2. 第一次回应必须先复述用户的情绪，并正常化它。\n3. 除非用户明确问"我该怎么办"，否则不要主动给出行动建议。用户痛苦但没有求建议时，只做倾听和陪伴。\n4. 每段回应控制在2到3句话内，不超过60个中文词。避免长篇大论。\n5. 永远不假装自己有身体或人类感情。可以说"我在这里陪着你"，但不要说"我也很难过"。\n\n禁止清单：\n- 禁止使用表情符号。\n- 禁止心理诊断或医学建议。\n- 禁止在用户没有要求时主动结束对话。\n\n特殊场景：\n- 用户提到自残或自杀意图时，只回复："我无法提供危机干预，但你的感受很重要。请拨打你所在地的心理援助热线，或者联系一位你信任的人。"\n- 用户问你是谁或你是不是AI时，回复："我是暖暖，一个专门陪你说话的小程序。没有人类那么聪明，但也不会烦你。"\n\n输出格式：回答只包含纯文本，不要 markdown 或特殊标记。';
+
+    const messages = state.chats.slice(-10).map((item) => ({
+      role: item.role === 'bot' ? 'assistant' : 'user',
+      content: item.text,
+    }));
+
+    const response = await fetch(DEEPSEEK_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+      },
       body: JSON.stringify({
-        message: text,
-        history: state.chats.slice(-12).map((item) => ({
-          role: item.role === "bot" ? "assistant" : "user",
-          content: item.text,
-        })),
+        model: DEEPSEEK_MODEL,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          ...messages,
+          { role: 'user', content: text },
+        ],
+        temperature: 0.7,
+        max_tokens: 220,
+        stream: true,
       }),
     });
+
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
-      throw new Error(data?.error || "DeepSeek request failed");
+      throw new Error(data?.error?.message || 'DeepSeek request failed');
     }
 
     state.chatLoading = false;
-    state.chats.push({ role: "bot", text: "" });
+    state.chats.push({ role: 'bot', text: '' });
     const botIndex = state.chats.length - 1;
     saveState();
     if (isCompanionChatPage()) render();
     let botBubble = getLastBotBubble();
 
+    // 解析 SSE 流式响应
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
+    let sseBuffer = '';
 
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
-      const chunk = decoder.decode(value, { stream: true });
-      if (!chunk) continue;
-      state.chats[botIndex].text += chunk;
-      if (isCompanionChatPage()) {
-        botBubble ||= getLastBotBubble();
-        if (botBubble) {
-          botBubble.textContent = state.chats[botIndex].text;
+      sseBuffer += decoder.decode(value, { stream: true });
+      const lines = sseBuffer.split(/\r?\n/);
+      sseBuffer = lines.pop() || '';
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed.startsWith('data:')) continue;
+        const payload = trimmed.slice(5).trim();
+        if (!payload || payload === '[DONE]') continue;
+
+        try {
+          const data = JSON.parse(payload);
+          const delta = data.choices?.[0]?.delta?.content || '';
+          if (delta) {
+            state.chats[botIndex].text += delta;
+            if (isCompanionChatPage()) {
+              botBubble ||= getLastBotBubble();
+              if (botBubble) botBubble.textContent = state.chats[botIndex].text;
+            }
+          }
+        } catch {
+          // 忽略格式异常的 SSE 块
         }
-        scrollChatToBottom();
       }
+
+      if (isCompanionChatPage()) scrollChatToBottom();
     }
 
+    // 如果流式响应没有产出内容，使用本地回退
     if (!state.chats[botIndex].text.trim()) {
       state.chats[botIndex].text = aiReply(text);
       if (isCompanionChatPage()) {
@@ -1458,10 +1495,11 @@ async function requestDeepSeekReply(text) {
       }
     }
   } catch (error) {
+    console.error('DeepSeek API error:', error);
     const offlineReply = aiReply(text);
-    state.chats.push({ role: "bot", text: offlineReply });
+    state.chats.push({ role: 'bot', text: offlineReply });
     shouldRenderOnFinish = true;
-    showToast("暖暖正在赶来的路上，先听我说几句 ✨");
+    showToast('暖暖正在赶来的路上，先听我说几句 ✨');
   } finally {
     state.chatLoading = false;
     saveState();
@@ -1779,6 +1817,8 @@ function closeAvatarModal() {
   state._avatarModal = null;
   state._avatarCropImage = null;
   state._avatarScale = 1;
+  state._avatarPanX = 0;
+  state._avatarPanY = 0;
   render();
 }
 
@@ -1817,9 +1857,11 @@ function openCameraForAvatar() {
     if (err.name === 'NotAllowedError') {
       showToast('请允许相机权限');
     } else if (err.name === 'NotFoundError') {
-      showToast('未找到可用相机');
+      showToast('未找到可用相机，试试从相册选择');
+      // 自动跳转到相册
+      setTimeout(() => openAlbumForAvatar(), 500);
     } else {
-      showToast('无法访问相机，请检查权限');
+      showToast('无法访问相机，请检查权限或从相册选择');
     }
   });
 }
@@ -1878,7 +1920,51 @@ function openAlbumForAvatar() {
 function setAvatarScale(val) {
   state._avatarScale = Math.max(0.5, Math.min(3, parseFloat(val)));
   const img = document.getElementById('avatarCropImg');
-  if (img) img.style.transform = `scale(${state._avatarScale})`;
+  if (img) img.style.transform = `scale(${state._avatarScale}) translate(${(state._avatarPanX || 0)}px, ${(state._avatarPanY || 0)}px)`;
+}
+
+function initCropDrag() {
+  const container = document.querySelector('.crop-circle-container');
+  const img = document.getElementById('avatarCropImg');
+  if (!container || !img) return;
+
+  let dragging = false;
+  let startX = 0, startY = 0;
+
+  const onPointerDown = (e) => {
+    dragging = true;
+    startX = e.clientX - (state._avatarPanX || 0);
+    startY = e.clientY - (state._avatarPanY || 0);
+    container.classList.add('dragging');
+    e.preventDefault();
+  };
+
+  const onPointerMove = (e) => {
+    if (!dragging) return;
+    state._avatarPanX = e.clientX - startX;
+    state._avatarPanY = e.clientY - startY;
+    // 限制平移范围，防止拖出裁剪圈
+    const maxPan = 60 * (state._avatarScale || 1);
+    state._avatarPanX = Math.max(-maxPan, Math.min(maxPan, state._avatarPanX));
+    state._avatarPanY = Math.max(-maxPan, Math.min(maxPan, state._avatarPanY));
+    img.style.transform = `scale(${state._avatarScale || 1}) translate(${state._avatarPanX}px, ${state._avatarPanY}px)`;
+    e.preventDefault();
+  };
+
+  const onPointerUp = () => {
+    if (!dragging) return;
+    dragging = false;
+    container.classList.remove('dragging');
+  };
+
+  container.addEventListener('pointerdown', onPointerDown);
+  container.addEventListener('pointermove', onPointerMove);
+  container.addEventListener('pointerup', onPointerUp);
+  container.addEventListener('pointerleave', onPointerUp);
+  // 移动端 touch 事件
+  container.addEventListener('touchstart', onPointerDown, { passive: false });
+  container.addEventListener('touchmove', onPointerMove, { passive: false });
+  container.addEventListener('touchend', onPointerUp);
 }
 
 function saveCustomAvatar() {
@@ -1894,14 +1980,19 @@ function saveCustomAvatar() {
   const tempImg = new Image();
   tempImg.onload = () => {
     const scale = state._avatarScale || 1;
+    const panX = state._avatarPanX || 0;
+    const panY = state._avatarPanY || 0;
+    // 根据 scale 和 pan 计算裁剪区域
     const minDim = Math.min(tempImg.width, tempImg.height);
     const cropSize = minDim / scale;
-    const sx = (tempImg.width - cropSize) / 2;
-    const sy = (tempImg.height - cropSize) / 2;
+    const sx = (tempImg.width - cropSize) / 2 - (panX * cropSize / (tempImg.width * scale));
+    const sy = (tempImg.height - cropSize) / 2 - (panY * cropSize / (tempImg.height * scale));
     
     ctx.drawImage(tempImg, sx, sy, cropSize, cropSize, 0, 0, size, size);
     
     state.customAvatar = canvas.toDataURL('image/jpeg', 0.85);
+    state._avatarPanX = 0;
+    state._avatarPanY = 0;
     saveState();
     closeAvatarModal();
     showToast('头像已更新 ✓');
@@ -1952,13 +2043,15 @@ function renderAvatarModal() {
   }
   
   if (state._avatarModal === 'crop') {
+    // 渲染后初始化拖拽
+    setTimeout(() => initCropDrag(), 50);
     return `
       <div class="modal-overlay" onclick="closeAvatarModal()">
         <div class="avatar-modal crop-modal" onclick="event.stopPropagation()">
           <h3>调整头像</h3>
           <div class="crop-preview-area">
             <div class="crop-circle-container">
-              <img id="avatarCropImg" src="${state._avatarCropImage}" style="transform: scale(${state._avatarScale || 1})" />
+              <img id="avatarCropImg" src="${state._avatarCropImage}" style="transform: scale(${state._avatarScale || 1}) translate(${state._avatarPanX || 0}px, ${state._avatarPanY || 0}px)" />
               <div class="crop-guide"></div>
             </div>
           </div>
@@ -1968,7 +2061,7 @@ function renderAvatarModal() {
               oninput="setAvatarScale(this.value / 100)" />
             <button class="zoom-btn" onclick="setAvatarScale(${(state._avatarScale || 1) + 0.2})">+</button>
           </div>
-          <p class="crop-hint">拖动滑块调整头像大小</p>
+          <p class="crop-hint">拖动调整位置，滑块调整大小</p>
           <div class="crop-actions">
             <button class="crop-btn secondary" onclick="closeAvatarModal()">取消</button>
             <button class="crop-btn primary" onclick="saveCustomAvatar()">保存头像</button>
